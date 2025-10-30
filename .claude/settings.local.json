@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(test:*)",
+      "Bash(source venv/Scripts/activate)",
+      "Bash(pip install:*)",
+      "Bash(cp:*)",
+      "Bash(timeout 3 bash:*)",
+      "Read(//c/Users/Desktop/Desktop/**)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enabledMcpjsonServers": [
+    "github.com/supabase-community/supabase-mcp",
+    "playwright"
+  ]
+}

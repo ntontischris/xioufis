@@ -1,0 +1,409 @@
+{% extends 'unfold/layouts/base.html' %}
+{% load i18n static %}
+
+{% block extrastyle %}
+<style>
+/* Force dark gray text on all gradient cards for visibility */
+.stats-card * {
+    color: #374151 !important;  /* Dark gray - σκούρο γκρι */
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-sublabel {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.stat-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 relative">
+    <!-- Decorative Background -->
+    <div class="absolute top-0 left-0 w-full h-64 overflow-hidden pointer-events-none opacity-30">
+        <div class="absolute top-10 right-10 w-72 h-72 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-10 left-10 w-96 h-96 bg-gradient-to-tr from-pink-400 to-indigo-500 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <!-- Welcome Header with Gradient -->
+    <div class="mb-8 relative z-10">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-fade-in">
+            {% trans "Καλώς ήρθατε στο Πολιτικό CRM" %}
+        </h1>
+        <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
+            {% trans "Επισκόπηση συστήματος και στατιστικά" %}
+        </p>
+    </div>
+
+    <!-- Stats Cards with Premium Design -->
+    {% if dashboard_stats %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-10">
+        <!-- Total Citizens Card - Indigo Gradient -->
+        <div class="stats-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md group-hover:scale-110 transition-transform duration-300">
+                        <span class="material-symbols-outlined text-4xl">people</span>
+                    </div>
+                    <div class="px-3 py-1 bg-white/20 rounded-full backdrop-blur-md">
+                        <span class="stat-badge">+{{ dashboard_stats.new_citizens_last_month }}</span>
+                    </div>
+                </div>
+
+                <p class="stat-label">{% trans "Σύνολο Πολιτών" %}</p>
+                <p class="stat-number">{{ dashboard_stats.total_citizens }}</p>
+                <p class="stat-sublabel">{% trans "νέοι τελευταίο μήνα" %}</p>
+
+                <div class="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white rounded-full animate-expand" style="width: 75%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Requests Card - Pink/Orange Gradient -->
+        <div class="stats-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 to-orange-500 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                        <span class="material-symbols-outlined text-4xl animate-pulse">pending_actions</span>
+                    </div>
+                    <div class="px-3 py-1 bg-white/20 rounded-full backdrop-blur-md">
+                        <span class="stat-badge">+{{ dashboard_stats.new_requests_last_month }}</span>
+                    </div>
+                </div>
+
+                <p class="stat-label">{% trans "Ενεργά Αιτήματα" %}</p>
+                <p class="stat-number">{{ dashboard_stats.active_requests }}</p>
+                <p class="stat-sublabel">{% trans "νέα αυτόν τον μήνα" %}</p>
+
+                <div class="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white rounded-full animate-expand" style="width: 60%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Requests Card - Red/Yellow Gradient -->
+        <div class="stats-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-yellow-500 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                        <span class="material-symbols-outlined text-4xl">warning</span>
+                    </div>
+                    {% if dashboard_stats.overdue_requests > 0 %}
+                    <div class="px-2 py-1 bg-white/30 rounded-full backdrop-blur-md animate-bounce">
+                        <span class="stat-badge">!</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="stat-label">{% trans "Καθυστερημένα" %}</p>
+                <p class="stat-number">{{ dashboard_stats.overdue_requests }}</p>
+                <p class="stat-sublabel">{% trans ">25 ημέρες" %}</p>
+
+                <div class="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white rounded-full animate-expand" style="width: {% if dashboard_stats.overdue_requests > 0 %}90%{% else %}10%{% endif %}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Rate Card - Teal/Cyan Gradient -->
+        <div class="stats-card group relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md group-hover:scale-110 transition-transform duration-300">
+                        <span class="material-symbols-outlined text-4xl">check_circle</span>
+                    </div>
+                    <div class="px-3 py-1 bg-white/20 rounded-full backdrop-blur-md">
+                        <span class="stat-badge">{{ dashboard_stats.completion_rate }}%</span>
+                    </div>
+                </div>
+
+                <p class="stat-label">{% trans "Ποσοστό Ολοκλήρωσης" %}</p>
+                <p class="stat-number">{{ dashboard_stats.completion_rate }}<span style="font-size: 1.875rem;">%</span></p>
+                <p class="stat-sublabel">{% trans "ολοκληρωμένα αιτήματα" %}</p>
+
+                <div class="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white rounded-full animate-expand" style="width: {{ dashboard_stats.completion_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts Row with Glass Effect -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 relative z-10">
+        <!-- Request Categories Chart -->
+        {% if request_categories %}
+        <div class="relative overflow-hidden rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-xl border border-white/20 p-6 hover:shadow-2xl transition-all duration-300">
+            <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
+
+            <h2 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6 relative z-10">
+                {% trans "Αιτήματα ανά Κατηγορία" %}
+            </h2>
+            <canvas id="categoriesChart" height="250" class="relative z-10"></canvas>
+        </div>
+        {% endif %}
+
+        <!-- Request Status Chart -->
+        {% if request_statuses %}
+        <div class="relative overflow-hidden rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-xl border border-white/20 p-6 hover:shadow-2xl transition-all duration-300">
+            <div class="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-pink-400/20 to-orange-500/20 rounded-full blur-3xl"></div>
+
+            <h2 class="text-xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent mb-6 relative z-10">
+                {% trans "Κατάσταση Αιτημάτων" %}
+            </h2>
+            <canvas id="statusChart" height="250" class="relative z-10"></canvas>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Monthly Trend Chart -->
+    {% if monthly_trend %}
+    <div class="relative overflow-hidden rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-xl border border-white/20 p-6 mb-8 hover:shadow-2xl transition-all duration-300 z-10">
+        <div class="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-teal-400/20 to-cyan-500/20 rounded-full blur-3xl"></div>
+
+        <h2 class="text-xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-6 relative z-10">
+            {% trans "Τάση Αιτημάτων (6 μήνες)" %}
+        </h2>
+        <canvas id="trendChart" height="100" class="relative z-10"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- Additional Info Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Collaborators -->
+        {% if top_collaborators %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                {% trans "Κορυφαίοι Συνεργάτες" %}
+            </h2>
+            <div class="space-y-3">
+                {% for collaborator, count in top_collaborators %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                    <div class="flex items-center">
+                        <span class="material-symbols-outlined text-gray-600 dark:text-gray-400 mr-2">
+                            person
+                        </span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {{ collaborator }}
+                        </span>
+                    </div>
+                    <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
+                        {{ count }} {% trans "πολίτες" %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Citizens by Municipality -->
+        {% if citizens_by_municipality %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                {% trans "Κατανομή ανά Δήμο" %}
+            </h2>
+            <div class="space-y-3">
+                {% for municipality, count in citizens_by_municipality.items %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                    <div class="flex items-center">
+                        <span class="material-symbols-outlined text-gray-600 dark:text-gray-400 mr-2">
+                            location_city
+                        </span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {{ municipality }}
+                        </span>
+                    </div>
+                    <span class="text-sm font-bold text-green-600 dark:text-green-400">
+                        {{ count }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 bg-blue-50 dark:bg-blue-900 rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            {% trans "Γρήγορες Ενέργειες" %}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <a href="{% url 'admin:citizens_citizen_add' %}"
+               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
+                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 mr-3 text-2xl">
+                    person_add
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% trans "Νέος Πολίτης" %}
+                </span>
+            </a>
+            <a href="{% url 'admin:citizens_request_add' %}"
+               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
+                <span class="material-symbols-outlined text-green-600 dark:text-green-400 mr-3 text-2xl">
+                    add_task
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% trans "Νέο Αίτημα" %}
+                </span>
+            </a>
+            <a href="{% url 'admin:citizens_request_changelist' %}?κατασταση__exact=ΕΚΚΡΕΜΕΙ"
+               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
+                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 mr-3 text-2xl">
+                    pending_actions
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% trans "Εκκρεμή Αιτήματα" %}
+                </span>
+            </a>
+            <a href="{% url 'admin:citizens_citizen_changelist' %}"
+               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
+                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 mr-3 text-2xl">
+                    list
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% trans "Όλοι οι Πολίτες" %}
+                </span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Request Categories Pie Chart
+    {% if request_categories %}
+    const categoriesCtx = document.getElementById('categoriesChart');
+    if (categoriesCtx) {
+        new Chart(categoriesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for key in request_categories.keys %}'{{ key }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for value in request_categories.values %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgba(139, 92, 246, 0.85)',
+                        'rgba(236, 72, 153, 0.85)',
+                        'rgba(251, 146, 60, 0.85)',
+                        'rgba(34, 197, 94, 0.85)',
+                        'rgba(14, 165, 233, 0.85)',
+                    ],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // Request Status Pie Chart
+    {% if request_statuses %}
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: [{% for key in request_statuses.keys %}'{{ key }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for value in request_statuses.values %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.85)',
+                        'rgba(251, 191, 36, 0.85)',
+                        'rgba(148, 163, 184, 0.85)',
+                    ],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // Monthly Trend Line Chart
+    {% if monthly_trend %}
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for key in monthly_trend.keys %}'{{ key }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: '{% trans "Αιτήματα" %}',
+                    data: [{% for value in monthly_trend.values %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

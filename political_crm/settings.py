@@ -23,7 +23,12 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-# Add Railway domains in production
+# Add Railway domains (including healthcheck)
+ALLOWED_HOSTS += [
+    'healthcheck.railway.app',  # Railway health checks
+]
+
+# Add production Railway domains
 if not DEBUG:
     ALLOWED_HOSTS += [
         '.railway.app',

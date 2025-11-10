@@ -36,6 +36,18 @@ if not DEBUG:
         '*.up.railway.app',
     ]
 
+# CSRF Trusted Origins for Railway
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:8000,http://127.0.0.1:8000'
+).split(',')
+
+# Add Railway domains for CSRF
+CSRF_TRUSTED_ORIGINS += [
+    'https://*.railway.app',
+    'https://*.up.railway.app',
+]
+
 
 # Application definition
 

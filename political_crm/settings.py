@@ -15,10 +15,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+# Railway will provide this via environment variable
+SECRET_KEY = config('SECRET_KEY', default='')
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY environment variable is required! "
+        "Please set it in Railway dashboard. "
+        "Generate one using: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'"
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', cast=bool)
+# Default to False for production safety
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Get Railway domain (auto-detected from Railway env vars)
 railway_static_url = os.getenv('RAILWAY_STATIC_URL')
@@ -207,7 +215,8 @@ if (BASE_DIR / 'static').exists():
     STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Whitenoise configuration for production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using CompressedStaticFilesStorage (non-manifest) to avoid strict missing file errors
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files
 MEDIA_URL = 'media/'
@@ -221,13 +230,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration
 # https://docs.djangoproject.com/en/5.0/topics/email/
+# Falls back to console backend if email credentials not provided (development-friendly)
 
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+# Use console backend if email not configured, SMTP otherwise
+if not EMAIL_HOST_USER:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print(">>> Email backend: Console (credentials not configured)")
+else:
+    EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+    print(f">>> Email backend: SMTP ({EMAIL_HOST})")
+
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='CRM Γραφείου <noreply@example.com>')
 
 # Site URL for emails
@@ -370,6 +388,8 @@ UNFOLD = {
 
 
 # Logging Configuration
+# Railway uses ephemeral filesystem - only console logging
+# File logging only enabled for local development
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -380,12 +400,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -394,18 +408,28 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'citizens': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
     },
 }
 
-# Create logs directory if it doesn't exist
-LOGS_DIR = BASE_DIR / 'logs'
-LOGS_DIR.mkdir(exist_ok=True)
+# Optional: Add file logging for local development only
+if DEBUG and 'DATABASE_URL' not in os.environ:
+    LOGS_DIR = BASE_DIR / 'logs'
+    LOGS_DIR.mkdir(exist_ok=True)
+    LOGGING['handlers']['file'] = {
+        'level': 'INFO',
+        'class': 'logging.FileHandler',
+        'filename': LOGS_DIR / 'django.log',
+        'formatter': 'verbose',
+    }
+    LOGGING['loggers']['django']['handlers'].append('file')
+    LOGGING['loggers']['citizens']['handlers'].append('file')
+    print(">>> File logging enabled (local development)")

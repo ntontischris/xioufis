@@ -1,45 +1,27 @@
+# Production Dependencies for Political CRM
+# For development dependencies, see requirements-dev.txt
+
 # Core Framework
 Django>=5.0.0
-psycopg2-binary>=2.9.9          # PostgreSQL driver for Railway/Supabase
+psycopg2-binary>=2.9.9          # PostgreSQL driver for Railway
 python-decouple>=3.8            # Environment variables
-django-environ>=0.11.2          # Alternative for env management
 dj-database-url>=2.1.0          # Database URL parsing for Railway
 
-# Admin & UI
-django-unfold==0.67.0           # Modern admin theme (Premium design)
-django-jazzmin>=3.0.0           # Alternative admin theme
-django-admin-sortable2>=2.1.10  # Drag-drop ordering
-
-# Authentication & Security
-django-two-factor-auth>=1.15.0  # 2FA with email
-qrcode>=7.4.2                   # Required for 2FA
-django-axes>=6.1.1              # Brute-force protection
-django-auditlog>=2.3.0          # Activity & IP logging
-django-session-timeout>=0.1.0   # Auto logout
-django-ratelimit>=4.1.0         # Rate limiting
+# Admin Interface
+django-unfold==0.67.0           # Modern admin theme (Premium glassmorphism design)
 
 # Data Management
 django-import-export>=3.3.0     # Excel/CSV import/export
-django-filter>=23.5             # Advanced filtering
-django-crispy-forms>=2.1        # Beautiful forms
-crispy-bootstrap5>=2024.2       # Bootstrap 5 integration
+openpyxl>=3.1.2                 # Excel file operations
+reportlab>=4.0.7                # PDF generation (for future reporting)
 
-# Reporting & Analytics
-reportlab>=4.0.7                # PDF generation
-openpyxl>=3.1.2                 # Excel operations
-pandas>=2.1.4                   # Data analysis (optional)
-
-# Development & Testing
-pytest-django>=4.7.0            # Testing framework
-factory-boy>=3.3.0              # Test data factories
-django-debug-toolbar>=4.2.0     # Debug utilities (development only)
-black>=23.12.1                  # Code formatter
-flake8>=6.1.0                   # Code linter
-
-# Production
-gunicorn>=21.2.0                # WSGI server
+# Production Server
+gunicorn>=21.2.0                # WSGI HTTP server
 whitenoise>=6.6.0               # Static files serving
-sentry-sdk>=1.39.2              # Error tracking (optional)
 
-# Image handling
-Pillow>=10.0.0                  # For image uploads
+# Image Handling
+Pillow>=10.0.0                  # Image uploads and processing
+
+# Optional: Error Tracking
+# Uncomment in production if using Sentry:
+# sentry-sdk>=1.39.2            # Error monitoring and tracking

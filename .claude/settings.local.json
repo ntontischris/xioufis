@@ -1,18 +1,18 @@
 {
   "permissions": {
     "allow": [
+      "Bash(export SECRET_KEY='test-key-for-local')",
+      "Bash(export DEBUG=True)",
+      "Bash(export DJANGO_SETTINGS_MODULE=political_crm.settings)",
+      "Bash(export SECRET_KEY='test-key-for-testing')",
       "Bash(python:*)",
-      "Bash(test:*)",
-      "Bash(source venv/Scripts/activate)",
-      "Bash(pip install:*)",
-      "Bash(cp:*)",
-      "Bash(timeout 3 bash:*)",
-      "Read(//c/Users/Desktop/Desktop/**)",
-      "Bash(git init:*)"
+      "Bash(cat:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "github.com/supabase-community/supabase-mcp",
     "playwright"

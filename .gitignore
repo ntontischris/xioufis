@@ -30,6 +30,7 @@ venv.bak/
 
 # Django
 *.log
+logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -68,3 +69,10 @@ htmlcov/
 # Backup files
 *.bak
 nul
+
+# Deployment (keep these in git, but listed here for reference)
+# Procfile - KEEP in git for Railway
+# build.sh - KEEP in git for Railway
+# runtime.txt - KEEP in git for Railway
+# requirements.txt - KEEP in git (production dependencies)
+# requirements-dev.txt - KEEP in git (development dependencies)

@@ -1,0 +1,27 @@
+# Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# First install production dependencies
+-r requirements.txt
+
+# Testing Framework
+pytest>=7.4.0
+pytest-django>=4.7.0
+pytest-cov>=4.1.0
+factory-boy>=3.3.0
+
+# Code Quality Tools
+black>=23.12.1                  # Code formatter
+flake8>=6.1.0                   # Code linter
+isort>=5.13.0                   # Import sorting
+
+# Development Tools
+django-debug-toolbar>=4.2.0     # Debug utilities for Django
+ipython>=8.18.0                 # Enhanced Python shell
+django-extensions>=3.2.3        # Extra management commands
+
+# Optional Development Tools
+# Uncomment if needed:
+# coverage>=7.3.0               # Test coverage reporting
+# pylint>=3.0.0                 # Advanced linting
+# mypy>=1.7.0                   # Type checking

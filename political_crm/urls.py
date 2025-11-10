@@ -8,12 +8,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from citizens.views import citizen_dashboard, homepage
+from citizens.views import citizen_dashboard, homepage, health_check
 # from two_factor.urls import urlpatterns as tf_urls  # Disabled for testing
 
 urlpatterns = [
     # Homepage
     path('', homepage, name='homepage'),
+
+    # Healthcheck endpoint (Railway)
+    path('health/', health_check, name='health_check'),
 
     # Citizen Dashboard (must be before admin/ to work)
     path('admin/citizens/citizen/<int:pk>/dashboard/', citizen_dashboard, name='citizen_dashboard'),

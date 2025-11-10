@@ -15,10 +15,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-please-change-in-production-xyz123')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', cast=bool)
 
 # ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -32,9 +32,12 @@ ALLOWED_HOSTS += [
 if not DEBUG:
     ALLOWED_HOSTS += [
         '.railway.app',
-        '*.railway.app',
-        '*.up.railway.app',
+        '.up.railway.app',
     ]
+
+# Add specific Railway domain if available
+if railway_static_url:
+    ALLOWED_HOSTS.append(railway_static_url)
 
 # CSRF Trusted Origins for Railway
 CSRF_TRUSTED_ORIGINS = config(
@@ -43,10 +46,10 @@ CSRF_TRUSTED_ORIGINS = config(
 ).split(',')
 
 # Add Railway public domain if it exists (auto-detected from Railway env vars)
-railway_public_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
-if railway_public_domain:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{railway_public_domain}')
-    CSRF_TRUSTED_ORIGINS.append(f'http://{railway_public_domain}')
+railway_static_url = os.getenv('RAILWAY_STATIC_URL')
+if railway_static_url:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{railway_static_url}')
+    CSRF_TRUSTED_ORIGINS.append(f'http://{railway_static_url}')
 
 
 # Application definition
@@ -123,10 +126,14 @@ if 'DATABASE_URL' in os.environ:
             default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=True
         )
     }
-    print(">>> Using Railway PostgreSQL Database")
+
+    # Add SSL requirement for Railway PostgreSQL
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+
+    print(">>> Using Railway PostgreSQL Database with SSL")
 
 # Development SQLite
 else:

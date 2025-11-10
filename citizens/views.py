@@ -7,6 +7,8 @@ organized in tabs for better user experience.
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Q, Prefetch
+from django.http import JsonResponse
+from django.db import connection
 from .models import Citizen, Request, Communication, MilitaryPersonnel
 
 
@@ -15,6 +17,35 @@ def homepage(request):
     Homepage with connect button to admin login
     """
     return render(request, 'homepage.html')
+
+
+def health_check(request):
+    """
+    Railway healthcheck endpoint.
+
+    Checks:
+    - Database connectivity
+    - Basic app health
+
+    Returns:
+    - 200 OK if healthy
+    - 500 Error if unhealthy
+    """
+    try:
+        # Check database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+
+        return JsonResponse({
+            'status': 'healthy',
+            'database': 'connected'
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'unhealthy',
+            'error': str(e)
+        }, status=500)
 
 
 @staff_member_required

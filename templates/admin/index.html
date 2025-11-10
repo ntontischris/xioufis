@@ -253,7 +253,7 @@
         <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             {% trans "Γρήγορες Ενέργειες" %}
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a href="{% url 'admin:citizens_citizen_add' %}"
                class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
                 <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 mr-3 text-2xl">
@@ -263,24 +263,6 @@
                     {% trans "Νέος Πολίτης" %}
                 </span>
             </a>
-            <a href="{% url 'admin:citizens_request_add' %}"
-               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
-                <span class="material-symbols-outlined text-green-600 dark:text-green-400 mr-3 text-2xl">
-                    add_task
-                </span>
-                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {% trans "Νέο Αίτημα" %}
-                </span>
-            </a>
-            <a href="{% url 'admin:citizens_request_changelist' %}?κατασταση__exact=ΕΚΚΡΕΜΕΙ"
-               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
-                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 mr-3 text-2xl">
-                    pending_actions
-                </span>
-                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {% trans "Εκκρεμή Αιτήματα" %}
-                </span>
-            </a>
             <a href="{% url 'admin:citizens_citizen_changelist' %}"
                class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
                 <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 mr-3 text-2xl">
@@ -288,6 +270,15 @@
                 </span>
                 <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {% trans "Όλοι οι Πολίτες" %}
+                </span>
+            </a>
+            <a href="{% url 'admin:citizens_militarypersonnel_changelist' %}"
+               class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition">
+                <span class="material-symbols-outlined text-green-600 dark:text-green-400 mr-3 text-2xl">
+                    military_tech
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% trans "Στρατιωτικό Προσωπικό" %}
                 </span>
             </a>
         </div>

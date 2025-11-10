@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Political CRM System** - A Django 5.0 application for managing citizen contacts, requests, and military affairs with Greek language support. Uses Supabase (PostgreSQL) as the database backend and Django Unfold for a modern admin interface.
+**Political CRM System** - A Django 5.2.7 application for managing citizen contacts, requests, and military affairs with Greek language support. Uses Railway PostgreSQL as the primary database backend with Django Unfold for a premium glassmorphism admin interface.
 
 **Key Technologies:**
-- Django 5.0 with Python 3.11+
-- Supabase PostgreSQL (or Railway auto-provisioned PostgreSQL)
-- Django Unfold admin theme (premium design)
-- Two-Factor Authentication, Audit logging, Brute-force protection
+- Django 5.2.7 with Python 3.11+
+- Railway PostgreSQL (or Supabase as alternative)
+- Django Unfold 0.67.0 admin theme with glassmorphism design
+- Chart.js for dashboard visualizations
 - Import/Export (Excel/CSV) capabilities
-- Automated reminder system for pending requests
+- Automated reminder system via management commands
+- Custom citizen dashboard with tabs and animated statistics
 
 ## Development Commands
 
@@ -103,12 +104,18 @@ xioufis/
 │   ├── urls.py
 │   └── wsgi.py
 ├── citizens/               # Main app (all CRM functionality)
-│   ├── models.py          # 4 models: Citizen, Request, Communication, MilitaryRequest
+│   ├── models.py          # 4 models: Citizen, Request, Communication, MilitaryPersonnel
 │   ├── admin.py           # Unfold admin with optimized queries
 │   ├── signals.py         # Auto-update completion dates
 │   ├── dashboard.py       # Dashboard statistics callback
+│   ├── views.py           # Custom citizen dashboard view
+│   ├── static/citizens/   # Custom CSS/JS for dashboards
+│   ├── templates/         # Custom admin templates
 │   └── management/commands/
 │       └── check_reminders.py  # Automated reminder system
+├── templates/admin/       # Global admin customizations
+│   ├── index.html         # Premium dashboard with glassmorphism
+│   └── custom_dashboard.css  # Dashboard styling
 ```
 
 ### Database Models
@@ -132,10 +139,11 @@ xioufis/
 - Tracks: date, type, notes, created_by user
 - Audit trail for all citizen interactions
 
-**MilitaryRequest (Στρατιωτικό Αίτημα)** - Military-specific data
+**MilitaryPersonnel (Στρατιωτικό Προσωπικό)** - Military-specific data
 - Types: `ΣΤΡΑΤΙΩΤΗΣ` (conscript) or `ΜΟΝΙΜΟΣ` (permanent)
 - ΕΣΣΟ data: year + letter combination
 - Conditional fields based on military type
+- OneToOne relationship with Citizen (not Request)
 
 ### Database Configuration
 
@@ -169,13 +177,20 @@ def get_queryset(self, request):
 
 ### Security Features
 
-- **Two-Factor Authentication** - Currently disabled in settings (commented out), can be enabled
-- **Django Axes** - Brute-force protection (5 attempts = 1 hour lockout) - disabled for testing
-- **Auditlog** - Tracks all model changes with user attribution - disabled for testing
-- **Session timeout** - 1 hour (SESSION_COOKIE_AGE = 3600)
-- **Strong password validation** - Minimum 10 characters
+**Currently Disabled for Development:**
+- Two-Factor Authentication (django-otp, two_factor)
+- Brute-force protection (django-axes)
+- Audit logging (django-auditlog)
 
-To enable security features in production, uncomment relevant sections in `political_crm/settings.py`.
+**Active Security:**
+- Session timeout: 1 hour (SESSION_COOKIE_AGE = 3600)
+- Strong password validation
+- CSRF protection
+- XSS protection
+- Secure cookies in production
+- SSL-only database connections
+
+To enable 2FA/Axes/Auditlog in production, uncomment relevant sections in `political_crm/settings.py`.
 
 ### Reminder System Architecture
 
@@ -237,6 +252,27 @@ UNFOLD = {
 ```
 Returns counts for total citizens, pending requests, recent communications, etc.
 
+**Premium Dashboard Features (templates/admin/index.html):**
+- Glassmorphism design with gradient backgrounds
+- Interactive Chart.js visualizations (pie charts, line graphs)
+- Animated stat cards with hover effects
+- Real-time data from dashboard callback
+- Responsive grid layout
+
+### Custom Citizen Dashboard
+Individual citizen view with tabbed interface (`citizens/views.py` + `citizen_dashboard.html`):
+
+**Features:**
+- Tab navigation (Basic Info, Requests, Communications, Military Personnel)
+- Animated stat counters with JavaScript
+- Copy-to-clipboard for phone/email
+- Keyboard shortcuts (Ctrl+Arrow for tabs, Ctrl+E for edit)
+- Smooth scroll animations
+- Dark mode support
+
+**CSS:** `citizens/static/citizens/css/citizen_dashboard.css` (847 lines with glassmorphism)
+**JS:** `citizens/static/citizens/js/citizen_dashboard.js` (237 lines with animations)
+
 ### Deployment Configuration
 
 **Railway/Render/PaaS Platforms:**
@@ -289,8 +325,14 @@ Coverage configured in `pytest.ini` to track `citizens` app coverage.
 - **Reminders**: `citizens/management/commands/check_reminders.py` - Email reminder logic
 - **Signals**: `citizens/signals.py` - Auto-completion date setter
 - **Dashboard**: `citizens/dashboard.py` - Statistics callback for Unfold
+- **Premium admin dashboard**: `templates/admin/index.html` - Glassmorphism design with Chart.js
+- **Citizen dashboard**: `citizens/templates/admin/citizens/citizen_dashboard.html` - Tabbed interface
+- **Dashboard CSS**: `citizens/static/citizens/css/citizen_dashboard.css` - 847 lines of styling
+- **Dashboard JS**: `citizens/static/citizens/js/citizen_dashboard.js` - Interactive features
 - **Deployment docs**: `DEPLOYMENT.md`, `RAILWAY_DEPLOYMENT.md` - Platform-specific guides
+- **Database & Backups**: `RAILWAY_DATABASE_BACKUP_GUIDE.md` - Complete guide for backups and Google Sheets import
 - **Project summary**: `PROJECT_SUMMARY.md` - Complete feature overview
+- **Design upgrade**: `PREMIUM_DESIGN_UPGRADE.md` - Recent UI improvements
 
 ## Working with This Codebase
 
@@ -303,3 +345,35 @@ When modifying this project:
 6. Test phone validation with Greek number formats
 7. Remember to run makemigrations after model changes
 8. Update reminder logic if adding new request statuses
+9. When editing dashboard CSS, use `python manage.py collectstatic` to update static files
+10. Test glassmorphism effects in both light and dark modes
+
+## Recent Updates (November 2024)
+
+**Design Overhaul:**
+- Upgraded from Jazzmin to Django Unfold 0.67.0
+- Implemented premium glassmorphism design system
+- Added Chart.js visualizations to admin dashboard
+- Created custom citizen dashboard with tabs and animations
+- Fixed text visibility issues on gradient backgrounds
+
+**Architecture Changes:**
+- Changed MilitaryRequest model to MilitaryPersonnel (OneToOne with Citizen)
+- Added custom citizen dashboard view with URL routing
+- Implemented JavaScript-based features (copy-to-clipboard, animated counters)
+- Added dark mode support throughout the UI
+
+**GitHub Repository:**
+- Repository: https://github.com/ntontischris/xioufis
+- Successfully deployed initial commit (53 files, 10,564 lines)
+- Ready for Railway deployment with auto-detect Django support
+
+**Note:** The README.md may reference Jazzmin in some sections, but the project currently uses Django Unfold exclusively.
+
+## Deployment Status
+
+**Railway Configuration:**
+- All deployment files ready (Procfile, build.sh, railway.toml)
+- Database: Railway PostgreSQL (auto-provisioned)
+- Expected capacity: 10,000+ citizens with excellent performance
+- Cost: $5/month (includes database, SSL, auto-deploy)

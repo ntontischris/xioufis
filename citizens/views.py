@@ -10,6 +10,13 @@ from django.db.models import Count, Q, Prefetch
 from .models import Citizen, Request, Communication, MilitaryPersonnel
 
 
+def homepage(request):
+    """
+    Homepage with connect button to admin login
+    """
+    return render(request, 'homepage.html')
+
+
 @staff_member_required
 def citizen_dashboard(request, pk):
     """

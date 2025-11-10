@@ -258,7 +258,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # TWO_FACTOR_PATCH_ADMIN = True  # Enable 2FA in admin
 # LOGIN_URL = 'two_factor:login'
-# LOGIN_REDIRECT_URL = '/admin/'
+LOGIN_REDIRECT_URL = '/admin/'  # Redirect to dashboard after login
 
 
 # Django Unfold Configuration
@@ -294,14 +294,49 @@ UNFOLD = {
         },
     },
 
-    # Sidebar - Using default (automatic generation)
+    # Sidebar - Custom navigation with Dashboard always visible
     "SIDEBAR": {
         "show_search": True,
-        "show_all_applications": True,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": _("Αρχική"),
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            {
+                "title": _("Διαχείριση"),
+                "items": [
+                    {
+                        "title": _("Πολίτες"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:citizens_citizen_changelist"),
+                    },
+                    {
+                        "title": _("Στρατιωτικό Προσωπικό"),
+                        "icon": "military_tech",
+                        "link": reverse_lazy("admin:citizens_militarypersonnel_changelist"),
+                    },
+                    {
+                        "title": _("Χρήστες"),
+                        "icon": "people_outline",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                    },
+                ],
+            },
+        ],
     },
 
     # Dashboard callback for statistics
     "DASHBOARD_CALLBACK": "citizens.dashboard.dashboard_callback",
+
+    # Login redirect to dashboard
+    "LOGIN_REDIRECT": "/admin/",
 }
 
 

@@ -61,3 +61,10 @@ htmlcov/
 # Migrations (keep only __init__.py)
 # citizens/migrations/*.py
 # !citizens/migrations/__init__.py
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Backup files
+*.bak
+nul

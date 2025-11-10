@@ -20,6 +20,9 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
+# Get Railway domain (auto-detected from Railway env vars)
+railway_static_url = os.getenv('RAILWAY_STATIC_URL')
+
 # ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
@@ -45,8 +48,7 @@ CSRF_TRUSTED_ORIGINS = config(
     default='http://localhost:8000,http://127.0.0.1:8000'
 ).split(',')
 
-# Add Railway public domain if it exists (auto-detected from Railway env vars)
-railway_static_url = os.getenv('RAILWAY_STATIC_URL')
+# Add Railway public domain if it exists
 if railway_static_url:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_static_url}')
     CSRF_TRUSTED_ORIGINS.append(f'http://{railway_static_url}')

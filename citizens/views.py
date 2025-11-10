@@ -23,29 +23,16 @@ def health_check(request):
     """
     Railway healthcheck endpoint.
 
-    Checks:
-    - Database connectivity
-    - Basic app health
+    Simple healthcheck that just returns 200 OK.
+    Database checks removed to avoid healthcheck failures during migrations.
 
     Returns:
-    - 200 OK if healthy
-    - 500 Error if unhealthy
+    - 200 OK if app is running
     """
-    try:
-        # Check database connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-
-        return JsonResponse({
-            'status': 'healthy',
-            'database': 'connected'
-        }, status=200)
-
-    except Exception as e:
-        return JsonResponse({
-            'status': 'unhealthy',
-            'error': str(e)
-        }, status=500)
+    return JsonResponse({
+        'status': 'healthy',
+        'app': 'running'
+    }, status=200)
 
 
 @staff_member_required

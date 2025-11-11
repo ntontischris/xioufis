@@ -1,9 +1,10 @@
 #!/bin/bash
 
-echo "======================================"
-echo "Running Database Migrations..."
-echo "======================================"
-python manage.py migrate --noinput
+# Migrations disabled - will run manually after deployment
+# echo "======================================"
+# echo "Running Database Migrations..."
+# echo "======================================"
+# python manage.py migrate --noinput
 
 echo "======================================"
 echo "Collecting Static Files..."

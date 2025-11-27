@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 """
-Fix django_session table in Railway database
+MANUAL FIX SCRIPT - Run only when experiencing django_session errors
+
+⚠️  WARNING: This script will:
+    - Drop the existing django_session table
+    - ALL users will be logged out
+    - Should ONLY be run manually when there are session errors
+    - NEVER add this to Procfile or run automatically!
+
+Usage:
+    Railway Shell: python manual_fix_django_session.py
+
+Why you might need this:
+    - Login fails with django_session table errors
+    - Database corruption after manual interventions
+
+Normal operation:
+    - Django creates django_session table automatically via migrations
+    - You should NOT need this script in normal circumstances
 """
 import os
 import sys
@@ -8,9 +25,13 @@ import sys
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
     print("ERROR: DATABASE_URL not found")
+    print("This script only works with Railway PostgreSQL (DATABASE_URL must be set)")
     sys.exit(1)
 
-print("Connecting to Railway database...")
+print("\n" + "="*70)
+print("⚠️  WARNING: This will DROP django_session table and logout all users!")
+print("="*70)
+print("\nConnecting to Railway database...")
 
 try:
     import psycopg2

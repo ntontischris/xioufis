@@ -128,12 +128,28 @@ WSGI_APPLICATION = 'political_crm.wsgi.application'
 # Database Configuration
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Railway Auto-Detection (Production)
-# Railway automatically provides DATABASE_URL environment variable
+# Production: REQUIRE PostgreSQL via DATABASE_URL
+# Development: Allow SQLite fallback only when DEBUG=True
 if 'DATABASE_URL' in os.environ:
+    # Railway/Production PostgreSQL
+    database_url = os.environ.get('DATABASE_URL')
+
+    # Parse and fix URL encoding issues
+    from urllib.parse import urlparse, quote
+    parsed = urlparse(database_url)
+
+    # URL-encode password to handle special characters
+    if parsed.password and '@' in database_url:
+        # Extract password and encode it properly
+        password = quote(parsed.password, safe='')
+        database_url = database_url.replace(
+            f':{parsed.password}@',
+            f':{password}@'
+        )
+
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            default=database_url,
             conn_max_age=600,
             conn_health_checks=True,
         )
@@ -145,8 +161,8 @@ if 'DATABASE_URL' in os.environ:
 
     print(">>> Using Railway PostgreSQL Database with SSL")
 
-# Development SQLite
-else:
+# Development SQLite (only allowed when DEBUG=True)
+elif DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -154,6 +170,14 @@ else:
         }
     }
     print(">>> Using SQLite (Development Only)")
+
+# Production without DATABASE_URL: ERROR!
+else:
+    raise ValueError(
+        "DATABASE_URL environment variable is required in production! "
+        "DEBUG is False but no DATABASE_URL found. "
+        "Please configure PostgreSQL database in Railway."
+    )
 
 # Alternative: Manual Supabase Configuration
 # Uncomment if using Supabase instead of Railway PostgreSQL

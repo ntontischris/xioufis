@@ -40,14 +40,12 @@ class Citizen(models.Model):
     επιθετο = models.CharField(
         max_length=100,
         verbose_name="Επίθετο",
-        db_index=True,
         help_text="Το επώνυμο του πολίτη"
     )
 
     ονομα = models.CharField(
         max_length=100,
         verbose_name="Όνομα",
-        db_index=True,
         help_text="Το όνομα του πολίτη"
     )
 
@@ -61,7 +59,6 @@ class Citizen(models.Model):
         max_length=200,
         blank=True,
         verbose_name="Σύσταση Από",
-        db_index=True,
         help_text="Ποιος σύστησε τον πολίτη"
     )
 
@@ -93,8 +90,7 @@ class Citizen(models.Model):
 
     email = models.EmailField(
         blank=True,
-        verbose_name="Email",
-        db_index=True
+        verbose_name="Email"
     )
 
     # ============================================
@@ -133,8 +129,7 @@ class Citizen(models.Model):
         max_length=50,
         choices=ΔημοιChoices.choices,
         blank=True,
-        verbose_name="Δήμος",
-        db_index=True
+        verbose_name="Δήμος"
     )
 
     περιοχη = models.CharField(
@@ -156,8 +151,7 @@ class Citizen(models.Model):
         max_length=50,
         choices=ΕκλογικηΠεριφερειαChoices.choices,
         blank=True,
-        verbose_name="Εκλογική Περιφέρεια",
-        db_index=True
+        verbose_name="Εκλογική Περιφέρεια"
     )
 
     # ============================================
@@ -173,15 +167,13 @@ class Citizen(models.Model):
         max_length=50,
         choices=ΚατηγορίαΕπαφήςChoices.choices,
         default=ΚατηγορίαΕπαφήςChoices.GDPR,
-        verbose_name="Κατηγορία Επαφής",
-        db_index=True
+        verbose_name="Κατηγορία Επαφής"
     )
 
     ιδιοτητα = models.CharField(
         max_length=100,
         blank=True,
         verbose_name="Ιδιότητα",
-        db_index=True,
         help_text="π.χ. Φοιτητής, Συνταξιούχος, Επιχειρηματίας"
     )
 
@@ -230,11 +222,6 @@ class Citizen(models.Model):
         verbose_name = "Πολίτης"
         verbose_name_plural = "Πολίτες"
         ordering = ['-ημερομηνια_προσθηκης']
-        indexes = [
-            models.Index(fields=['επιθετο', 'ονομα']),
-            models.Index(fields=['δημος', 'εκλογικη_περιφερεια']),
-            models.Index(fields=['-ημερομηνια_προσθηκης']),
-        ]
         constraints = [
             models.UniqueConstraint(
                 fields=['επιθετο', 'ονομα', 'κινητο'],
@@ -316,7 +303,6 @@ class Communication(models.Model):
 
     ημερομηνια_επικοινωνιας = models.DateField(
         verbose_name="Ημερομηνία Επικοινωνίας",
-        db_index=True,
         help_text="Πότε έγινε η επικοινωνία"
     )
 
@@ -356,9 +342,6 @@ class Communication(models.Model):
         verbose_name = "Επικοινωνία"
         verbose_name_plural = "Επικοινωνίες"
         ordering = ['-ημερομηνια_επικοινωνιας', '-created_at']
-        indexes = [
-            models.Index(fields=['-ημερομηνια_επικοινωνιας']),
-        ]
 
     def __str__(self):
         return f"{self.πολιτης} - {self.ημερομηνια_επικοινωνιας}"
@@ -395,8 +378,7 @@ class Request(models.Model):
     κατηγορια_αιτηματος = models.CharField(
         max_length=30,
         choices=ΚατηγορίαΑιτήματοςChoices.choices,
-        verbose_name="Κατηγορία Αιτήματος",
-        db_index=True
+        verbose_name="Κατηγορία Αιτήματος"
     )
 
     class ΚατάστασηChoices(models.TextChoices):
@@ -408,15 +390,13 @@ class Request(models.Model):
         max_length=30,
         choices=ΚατάστασηChoices.choices,
         default=ΚατάστασηChoices.ΕΚΚΡΕΜΕΙ,
-        verbose_name="Κατάσταση",
-        db_index=True
+        verbose_name="Κατάσταση"
     )
 
     ημερομηνια_αποστολης = models.DateField(
         null=True,
         blank=True,
         verbose_name="Ημερομηνία Αποστολής",
-        db_index=True,
         help_text="Πότε στάλθηκε το αίτημα"
     )
 
@@ -472,10 +452,6 @@ class Request(models.Model):
         verbose_name = "Αίτημα"
         verbose_name_plural = "Αιτήματα"
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['κατασταση', '-ημερομηνια_αποστολης']),
-            models.Index(fields=['κατηγορια_αιτηματος', 'κατασταση']),
-        ]
 
     def __str__(self):
         return f"{self.πολιτης} - {self.get_κατηγορια_αιτηματος_display()}"
@@ -557,20 +533,17 @@ class MilitaryPersonnel(models.Model):
         max_length=20,
         choices=ΤυποςChoices.choices,
         verbose_name="Τύπος",
-        db_index=True,
         help_text="Στρατιώτης ή Μόνιμος"
     )
 
     # ΚΟΙΝΑ ΠΕΔΙΑ (για δημιουργία Citizen)
     επωνυμο = models.CharField(
         max_length=100,
-        verbose_name="Επώνυμο",
-        db_index=True
+        verbose_name="Επώνυμο"
     )
     ονομα = models.CharField(
         max_length=100,
-        verbose_name="Όνομα",
-        db_index=True
+        verbose_name="Όνομα"
     )
     πατρωνυμο = models.CharField(
         max_length=100,
@@ -668,8 +641,7 @@ class MilitaryPersonnel(models.Model):
     βαθμος = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="Βαθμός",
-        db_index=True
+        verbose_name="Βαθμός"
     )
     μοναδα_υπηρεσιας = models.CharField(
         max_length=200,
@@ -724,11 +696,6 @@ class MilitaryPersonnel(models.Model):
         verbose_name = "Στρατιωτικό Προσωπικό"
         verbose_name_plural = "Στρατιωτικό Προσωπικό"
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['τυπος', 'επωνυμο']),
-            models.Index(fields=['εσσο_ετος', 'εσσο_γραμμα']),
-            models.Index(fields=['-created_at']),
-        ]
 
     def __str__(self):
         return f"{self.επωνυμο} {self.ονομα} - {self.get_τυπος_display()}"

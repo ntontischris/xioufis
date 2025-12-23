@@ -1,0 +1,21 @@
+# Railway Configuration for Political CRM
+# https://docs.railway.app/reference/config-as-code
+
+[build]
+# Build command - install dependencies
+builder = "nixpacks"
+
+[deploy]
+# Number of instances
+numReplicas = 1
+
+# Health check configuration
+healthcheckPath = "/health/"
+healthcheckTimeout = 300
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Start command - run migrations first, then start gunicorn
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python create_admin_railway.py && gunicorn political_crm.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120"

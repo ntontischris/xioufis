@@ -17,5 +17,5 @@ healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
-# Start command - migrate, collectstatic, create admin, start server
-startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && (python manage.py createsuperuser --noinput --username $DJANGO_SUPERUSER_USERNAME --email $DJANGO_SUPERUSER_EMAIL 2>/dev/null || true) && gunicorn political_crm.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120"
+# Start command - migrate, collectstatic, create/reset admin, start server
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python create_or_reset_admin.py && gunicorn political_crm.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120"

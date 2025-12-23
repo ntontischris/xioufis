@@ -56,6 +56,13 @@ CSRF_TRUSTED_ORIGINS = config(
     default='http://localhost:8000,http://127.0.0.1:8000'
 ).split(',')
 
+# Always add Railway domains for production
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS += [
+        'https://*.railway.app',
+        'https://*.up.railway.app',
+    ]
+
 # Add Railway public domain if it exists
 if railway_static_url:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_static_url}')

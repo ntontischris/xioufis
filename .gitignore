@@ -76,3 +76,4 @@ nul
 # runtime.txt - KEEP in git for Railway
 # requirements.txt - KEEP in git (production dependencies)
 # requirements-dev.txt - KEEP in git (development dependencies)
+.venv/

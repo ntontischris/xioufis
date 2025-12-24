@@ -5,7 +5,7 @@ Models:
 - Citizen: Main citizen contact information
 - Communication: Communication history with citizens
 - Request: Citizen requests tracking
-- MilitaryRequest: Military-specific request details
+- MilitaryPersonnel: Military personnel data linked to Citizen
 """
 
 from django.db import models
@@ -14,6 +14,23 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from datetime import date, timedelta
+
+
+# ============================================
+# SHARED VALIDATORS
+# ============================================
+
+# Greek phone number validator (shared between Citizen and MilitaryPersonnel)
+GREEK_PHONE_VALIDATOR = RegexValidator(
+    regex=r'^(\+30)?[2-9][0-9]{9}$',
+    message='Εισάγετε έγκυρο ελληνικό τηλέφωνο (10 ψηφία, π.χ. 2310123456 ή 6912345678)'
+)
+
+# Greek postal code validator
+GREEK_POSTAL_CODE_VALIDATOR = RegexValidator(
+    regex=r'^[0-9]{5}$',
+    message='Εισάγετε έγκυρο 5ψήφιο ΤΚ'
+)
 
 
 class Citizen(models.Model):
@@ -69,17 +86,11 @@ class Citizen(models.Model):
     # ΕΠΙΚΟΙΝΩΝΙΑ
     # ============================================
 
-    # FIXED: Proper phone validation for Greek numbers
-    phone_regex = RegexValidator(
-        regex=r'^(\+30)?[2-9][0-9]{9}$',
-        message='Εισάγετε έγκυρο ελληνικό τηλέφωνο (10 ψηφία, π.χ. 2310123456 ή 6912345678)'
-    )
-
     κινητο = models.CharField(
         max_length=20,
         blank=True,
         verbose_name="Κινητό Τηλέφωνο",
-        validators=[phone_regex],
+        validators=[GREEK_PHONE_VALIDATOR],
         help_text="Μορφή: 6912345678 ή +306912345678"
     )
 
@@ -87,7 +98,7 @@ class Citizen(models.Model):
         max_length=20,
         blank=True,
         verbose_name="Σταθερό Τηλέφωνο",
-        validators=[phone_regex],
+        validators=[GREEK_PHONE_VALIDATOR],
         help_text="Μορφή: 2310123456 ή +302310123456"
     )
 
@@ -108,16 +119,11 @@ class Citizen(models.Model):
         help_text="Οδός και αριθμός"
     )
 
-    τκ_regex = RegexValidator(
-        regex=r'^[0-9]{5}$',
-        message='Εισάγετε έγκυρο 5ψήφιο ΤΚ'
-    )
-
     τκ = models.CharField(
         max_length=10,
         blank=True,
         verbose_name="ΤΚ",
-        validators=[τκ_regex]
+        validators=[GREEK_POSTAL_CODE_VALIDATOR]
     )
 
     class ΔημοιChoices(models.TextChoices):
@@ -578,17 +584,11 @@ class MilitaryPersonnel(models.Model):
         verbose_name="Πατρώνυμο"
     )
 
-    # Phone validation (same as Citizen)
-    phone_regex = RegexValidator(
-        regex=r'^(\+30)?[2-9][0-9]{9}$',
-        message='Εισάγετε έγκυρο ελληνικό τηλέφωνο (10 ψηφία)'
-    )
-
     κινητο = models.CharField(
         max_length=20,
         blank=True,
         verbose_name="Κινητό Τηλέφωνο",
-        validators=[phone_regex],
+        validators=[GREEK_PHONE_VALIDATOR],
         help_text="Μορφή: 6912345678"
     )
 

@@ -11,7 +11,7 @@ import pytest
 from datetime import date, timedelta
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from citizens.models import Citizen, Communication, Request, MilitaryRequest
+from citizens.models import Citizen, Communication, Request, MilitaryPersonnel
 
 
 @pytest.mark.django_db
@@ -189,35 +189,31 @@ class TestRequestModel:
 
 
 @pytest.mark.django_db
-class TestMilitaryRequestModel:
-    """Tests for MilitaryRequest model"""
+class TestMilitaryPersonnelModel:
+    """Tests for MilitaryPersonnel model"""
 
-    def test_create_military_request(self):
-        """Test creating military request"""
+    def test_create_military_personnel(self):
+        """Test creating military personnel linked to citizen"""
         citizen = Citizen.objects.create(
-            επιθετο="Τεστ",
-            ονομα="Χρήστης",
+            επιθετο="Παπαδόπουλος",
+            ονομα="Ιωάννης",
             κινητο="6912345678"
         )
 
-        request = Request.objects.create(
+        military = MilitaryPersonnel.objects.create(
             πολιτης=citizen,
-            κατηγορια_αιτηματος='ΣΤΡΑΤΙΩΤΙΚΟ',
-            αιτημα_κειμενο='Military request'
-        )
-
-        military = MilitaryRequest.objects.create(
-            αιτημα=request,
             τυπος='ΣΤΡΑΤΙΩΤΗΣ',
             ονομα='Ιωάννης',
             επωνυμο='Παπαδόπουλος',
+            κινητο='6912345678',
             εσσο_ετος='2025',
             εσσο_γραμμα='Α'
         )
 
         assert military.εσσο == '2025Α'
+        assert military.πολιτης == citizen
 
-    def test_military_request_εσσο_property(self):
+    def test_military_personnel_εσσο_property(self):
         """Test ΕΣΣΟ computed property"""
         citizen = Citizen.objects.create(
             επιθετο="Τεστ",
@@ -225,17 +221,12 @@ class TestMilitaryRequestModel:
             κινητο="6912345678"
         )
 
-        request = Request.objects.create(
+        military = MilitaryPersonnel.objects.create(
             πολιτης=citizen,
-            κατηγορια_αιτηματος='ΣΤΡΑΤΙΩΤΙΚΟ',
-            αιτημα_κειμενο='Test'
-        )
-
-        military = MilitaryRequest.objects.create(
-            αιτημα=request,
             τυπος='ΣΤΡΑΤΙΩΤΗΣ',
-            ονομα='Test',
-            επωνυμο='User'
+            ονομα='Χρήστης',
+            επωνυμο='Τεστ',
+            κινητο='6912345678'
         )
 
         # No ΕΣΣΟ data
@@ -247,6 +238,64 @@ class TestMilitaryRequestModel:
         military.save()
 
         assert military.εσσο == "2025Β"
+
+    def test_military_personnel_full_name(self):
+        """Test full_name property"""
+        citizen = Citizen.objects.create(
+            επιθετο="Γεωργίου",
+            ονομα="Νίκος",
+            πατρωνυμο="Κώστα",
+            κινητο="6912345678"
+        )
+
+        military = MilitaryPersonnel.objects.create(
+            πολιτης=citizen,
+            τυπος='ΜΟΝΙΜΟΣ',
+            ονομα='Νίκος',
+            επωνυμο='Γεωργίου',
+            πατρωνυμο='Κώστα',
+            κινητο='6912345678',
+            βαθμος='Λοχαγός'
+        )
+
+        assert military.full_name == "Γεωργίου Νίκος (Κώστα)"
+
+    def test_military_personnel_rank_or_esso(self):
+        """Test rank_or_esso property for different types"""
+        citizen1 = Citizen.objects.create(
+            επιθετο="Στρατιώτης",
+            ονομα="Τεστ",
+            κινητο="6912345678"
+        )
+
+        # Στρατιώτης - should return ΕΣΣΟ
+        military_conscript = MilitaryPersonnel.objects.create(
+            πολιτης=citizen1,
+            τυπος='ΣΤΡΑΤΙΩΤΗΣ',
+            ονομα='Τεστ',
+            επωνυμο='Στρατιώτης',
+            κινητο='6912345678',
+            εσσο_ετος='2025',
+            εσσο_γραμμα='Γ'
+        )
+        assert military_conscript.rank_or_esso == "2025Γ"
+
+        citizen2 = Citizen.objects.create(
+            επιθετο="Μόνιμος",
+            ονομα="Τεστ",
+            κινητο="6987654321"
+        )
+
+        # Μόνιμος - should return rank
+        military_permanent = MilitaryPersonnel.objects.create(
+            πολιτης=citizen2,
+            τυπος='ΜΟΝΙΜΟΣ',
+            ονομα='Τεστ',
+            επωνυμο='Μόνιμος',
+            κινητο='6987654321',
+            βαθμος='Ταγματάρχης'
+        )
+        assert military_permanent.rank_or_esso == "Ταγματάρχης"
 
 
 @pytest.mark.django_db

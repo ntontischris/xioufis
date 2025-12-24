@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'political_crm.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from citizens.models import Citizen, Communication, Request, MilitaryRequest
+from citizens.models import Citizen, Communication, Request, MilitaryPersonnel
 
 User = get_user_model()
 admin_user = User.objects.get(username='admin')
@@ -86,20 +86,22 @@ req3 = Request.objects.create(
 )
 print('  - Created request: Military (10 days old, PENDING)')
 
-# Create military request
-mil_req = MilitaryRequest.objects.create(
-    αιτημα=req3,
+# Create military personnel linked to citizen3
+mil_personnel = MilitaryPersonnel.objects.create(
+    πολιτης=citizen3,
     τυπος='ΣΤΡΑΤΙΩΤΗΣ',
     ονομα='Κωνσταντινος',
     επωνυμο='Ιωαννιδης',
     πατρωνυμο='Γεωργιου',
+    κινητο='6945678901',
     εσσο_ετος='2025',
     εσσο_γραμμα='Α',
     ασμ='2025001234',
     επιθυμια='71 Αεροπορικη Ταξιαρχια - Νεα Αγχιαλος',
-    ημερομηνια_παρουσιασης=date.today() + timedelta(days=30)
+    ημερομηνια_παρουσιασης=date.today() + timedelta(days=30),
+    αρμοδιος_συνεργατης=admin_user
 )
-print('  - Created military request: ESSO 2025A')
+print('  - Created military personnel: ESSO 2025A')
 
 # Create communications
 comm1 = Communication.objects.create(
@@ -125,7 +127,7 @@ print('Demo data created successfully!')
 print('===========================================')
 print('Citizens: 3')
 print('Requests: 3 (1 completed, 2 pending)')
-print('Military Requests: 1')
+print('Military Personnel: 1')
 print('Communications: 2')
 print('\nAdmin credentials:')
 print('  URL: http://127.0.0.1:8000/admin/')

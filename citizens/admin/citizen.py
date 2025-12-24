@@ -141,7 +141,7 @@ class CitizenAdmin(BadgeGeneratorMixin, ModelAdmin, ImportExportModelAdmin):
                 color,
                 count
             )
-        return format_html('<span style="color: green;">✓</span>')
+        return format_html('<span style="color: green;">{}</span>', '✓')
 
     active_requests_badge.short_description = 'Ενεργά Αιτήματα'
     active_requests_badge.admin_order_field = 'active_requests'
@@ -159,7 +159,7 @@ class CitizenAdmin(BadgeGeneratorMixin, ModelAdmin, ImportExportModelAdmin):
                 color,
                 military.get_τυπος_display()
             )
-        return format_html('<span style="color: #999;">-</span>')
+        return format_html('<span style="color: #999;">{}</span>', '-')
 
     military_badge.short_description = 'Στρατ. Προσωπικό'
 

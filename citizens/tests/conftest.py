@@ -25,7 +25,11 @@ def admin_user(db):
 
 @pytest.fixture
 def staff_user(db):
-    """Create staff user (Admin group) for tests."""
+    """Create staff user (Admin group) with citizen permissions for tests."""
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
+    from citizens.models import Citizen, Request, Communication
+
     user = User.objects.create_user(
         username='staffuser',
         email='staff@test.com',
@@ -35,12 +39,21 @@ def staff_user(db):
     # Create Admins group if doesn't exist
     group, _ = Group.objects.get_or_create(name='Admins')
     user.groups.add(group)
+
+    # Grant citizen-related permissions
+    for model in [Citizen, Request, Communication]:
+        ct = ContentType.objects.get_for_model(model)
+        perms = Permission.objects.filter(content_type=ct)
+        user.user_permissions.add(*perms)
+
     return user
 
 
 @pytest.fixture
 def regular_user(db):
-    """Create regular user for tests."""
+    """Create regular user with limited permissions for tests."""
+    from django.contrib.auth.models import Permission
+
     user = User.objects.create_user(
         username='regularuser',
         email='regular@test.com',
@@ -50,6 +63,14 @@ def regular_user(db):
     # Create Regular Users group if doesn't exist
     group, _ = Group.objects.get_or_create(name='Regular Users')
     user.groups.add(group)
+
+    # Grant limited permissions (can view users but not add/change/delete)
+    try:
+        view_user_perm = Permission.objects.get(codename='view_user')
+        user.user_permissions.add(view_user_perm)
+    except Permission.DoesNotExist:
+        pass  # Permission may not exist in test DB
+
     return user
 
 

@@ -1,4 +1,4 @@
-"""
+r"""
 Management command για database backup
 
 Δημιουργεί backup της Railway PostgreSQL database σε .sql αρχείο

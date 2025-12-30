@@ -1,10 +1,18 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -14,32 +22,116 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useCitizens } from '@/lib/hooks/useCitizens'
-import { Plus, Search, Loader2, Users } from 'lucide-react'
-import { useState } from 'react'
+import { Plus, Search, Users, Filter, X } from 'lucide-react'
+import { TableSkeleton } from '@/components/ui/TableSkeleton'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/lib/hooks/usePagination'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { formatGreekPhone } from '@/lib/utils/validators'
-import { getLabel, MUNICIPALITY_OPTIONS } from '@/lib/utils/constants'
+import { getLabel, MUNICIPALITY_OPTIONS, ELECTORAL_DISTRICT_OPTIONS } from '@/lib/utils/constants'
 import Link from 'next/link'
 
 export default function CitizensPage() {
+  return (
+    <Suspense fallback={<CitizensPageSkeleton />}>
+      <CitizensPageContent />
+    </Suspense>
+  )
+}
+
+function CitizensPageSkeleton() {
+  return (
+    <>
+      <Header title="Πολίτες" />
+      <div className="p-6 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Λίστα Πολιτών
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TableSkeleton rows={10} cols={5} />
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )
+}
+
+function CitizensPageContent() {
+  const router = useRouter()
   const { citizens, loading, error } = useCitizens()
   const [search, setSearch] = useState('')
+  const [firstNameFilter, setFirstNameFilter] = useState<string>('')
+  const [municipalityFilter, setMunicipalityFilter] = useState<string>('')
+  const [districtFilter, setDistrictFilter] = useState<string>('')
+
+  // Get unique first names for suggestions
+  const uniqueFirstNames = [...new Set(citizens.map(c => c.first_name))].sort()
+
+  const handleRowClick = (citizenId: string, e: React.MouseEvent) => {
+    // Don't navigate if clicking a link or button
+    const target = e.target as HTMLElement
+    if (target.closest('a') || target.closest('button')) {
+      return
+    }
+    router.push(`/dashboard/citizens/${citizenId}`)
+  }
+
+  // Check for success message from delete/archive action
+  useEffect(() => {
+    const successMessage = sessionStorage.getItem('citizen_action_success')
+    if (successMessage) {
+      toast.success(successMessage)
+      sessionStorage.removeItem('citizen_action_success')
+    }
+  }, [])
 
   const filteredCitizens = citizens.filter((citizen) => {
     const searchLower = search.toLowerCase()
-    return (
+    const matchesSearch = !search || (
       citizen.surname.toLowerCase().includes(searchLower) ||
       citizen.first_name.toLowerCase().includes(searchLower) ||
       citizen.mobile?.toLowerCase().includes(searchLower) ||
       citizen.email?.toLowerCase().includes(searchLower)
     )
+    // First name filter - matches if first name starts with the filter or equals it
+    const matchesFirstName = !firstNameFilter ||
+      citizen.first_name.toLowerCase().startsWith(firstNameFilter.toLowerCase())
+    const matchesMunicipality = !municipalityFilter || citizen.municipality === municipalityFilter
+    const matchesDistrict = !districtFilter || citizen.electoral_district === districtFilter
+
+    return matchesSearch && matchesFirstName && matchesMunicipality && matchesDistrict
   })
+
+  // Pagination
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    setPage
+  } = usePagination(filteredCitizens, { itemsPerPage: 20 })
+
+  const clearFilters = () => {
+    setSearch('')
+    setFirstNameFilter('')
+    setMunicipalityFilter('')
+    setDistrictFilter('')
+  }
+
+  const hasFilters = search || firstNameFilter || municipalityFilter || districtFilter
 
   return (
     <>
       <Header title="Πολίτες" />
       <div className="p-6 space-y-6">
         {/* Actions bar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -57,6 +149,60 @@ export default function CitizensPage() {
           </Button>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+
+          {/* First Name Filter - for name days! */}
+          <div className="relative">
+            <Input
+              list="first-names-list"
+              placeholder="Φίλτρο ονόματος..."
+              value={firstNameFilter}
+              onChange={(e) => setFirstNameFilter(e.target.value)}
+              className="w-[180px]"
+            />
+            <datalist id="first-names-list">
+              {uniqueFirstNames.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </div>
+
+          <Select value={municipalityFilter} onValueChange={(val) => setMunicipalityFilter(val === 'all' ? '' : val)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Δήμος" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Όλοι οι δήμοι</SelectItem>
+              {MUNICIPALITY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={districtFilter} onValueChange={(val) => setDistrictFilter(val === 'all' ? '' : val)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Εκλ. Περιφέρεια" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Όλες οι περιφέρειες</SelectItem>
+              {ELECTORAL_DISTRICT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-1 h-4 w-4" />
+              Καθαρισμός
+            </Button>
+          )}
+        </div>
+
         {/* Citizens table */}
         <Card>
           <CardHeader>
@@ -70,9 +216,7 @@ export default function CitizensPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
+              <TableSkeleton rows={10} cols={5} />
             ) : error ? (
               <div className="text-center py-8 text-destructive">
                 <p>Σφάλμα: {error}</p>
@@ -84,50 +228,62 @@ export default function CitizensPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Δεν βρέθηκαν πολίτες</p>
-                {search && (
+                {hasFilters && (
                   <p className="text-sm mt-1">
-                    Δοκιμάστε διαφορετικούς όρους αναζήτησης
+                    Δοκιμάστε διαφορετικά φίλτρα
                   </p>
                 )}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ονοματεπώνυμο</TableHead>
-                    <TableHead>Κινητό</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Δήμος</TableHead>
-                    <TableHead className="text-right">Ενέργειες</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCitizens.map((citizen) => (
-                    <TableRow key={citizen.id}>
-                      <TableCell className="font-medium">
-                        {citizen.surname} {citizen.first_name}
-                        {citizen.father_name && (
-                          <span className="text-muted-foreground ml-1">
-                            ({citizen.father_name})
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{formatGreekPhone(citizen.mobile)}</TableCell>
-                      <TableCell>{citizen.email || '-'}</TableCell>
-                      <TableCell>
-                        {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/citizens/${citizen.id}`}>
-                            Προβολή
-                          </Link>
-                        </Button>
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ονοματεπώνυμο</TableHead>
+                      <TableHead>Κινητό</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Δήμος</TableHead>
+                      <TableHead className="text-right">Ενέργειες</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedItems.map((citizen) => (
+                      <TableRow
+                        key={citizen.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={(e) => handleRowClick(citizen.id, e)}
+                      >
+                        <TableCell className="font-medium">
+                          {citizen.surname} {citizen.first_name}
+                          {citizen.father_name && (
+                            <span className="text-muted-foreground ml-1">
+                              ({citizen.father_name})
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{formatGreekPhone(citizen.mobile)}</TableCell>
+                        <TableCell>{citizen.email || '-'}</TableCell>
+                        <TableCell>
+                          {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/dashboard/citizens/${citizen.id}`}>
+                              Προβολή
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  onPageChange={setPage}
+                />
+              </>
             )}
           </CardContent>
         </Card>

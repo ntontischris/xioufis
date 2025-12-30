@@ -2,21 +2,37 @@
 
 import { Bell, Search, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useEffect, useState } from 'react'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { SearchDialog } from './SearchDialog'
+import { useEffect, useState, useCallback } from 'react'
 
 interface HeaderProps {
   title?: string
+  breadcrumbLabel?: string // Custom label for dynamic routes (e.g., citizen name)
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, breadcrumbLabel }: HeaderProps) {
   const [isDark, setIsDark] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
     // Check for dark mode preference
     const isDarkMode = document.documentElement.classList.contains('dark')
     setIsDark(isDarkMode)
+  }, [])
+
+  // Global keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   const toggleDarkMode = () => {
@@ -25,20 +41,42 @@ export function Header({ title }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-      {/* Title */}
-      <h1 className="text-xl font-semibold">{title || 'Dashboard'}</h1>
+    <header className="border-b bg-card px-6 py-3">
+      {/* Breadcrumb */}
+      <Breadcrumb customLabel={breadcrumbLabel} className="mb-2" />
+
+      {/* Main header row */}
+      <div className="flex items-center justify-between">
+        {/* Title */}
+        <h1 className="text-xl font-semibold">{title || 'Dashboard'}</h1>
 
       {/* Right side */}
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Αναζήτηση..."
-            className="w-64 pl-9"
-          />
-        </div>
+        {/* Search button */}
+        <Button
+          variant="outline"
+          className="hidden md:flex items-center gap-2 text-muted-foreground w-64 justify-start"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="h-4 w-4" />
+          <span>Αναζήτηση...</span>
+          <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">
+            Ctrl+K
+          </kbd>
+        </Button>
+
+        {/* Mobile search button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+
+        {/* Search Dialog */}
+        <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
         {/* Dark mode toggle */}
         <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
@@ -63,6 +101,7 @@ export function Header({ title }: HeaderProps) {
             ΧΡ
           </AvatarFallback>
         </Avatar>
+      </div>
       </div>
     </header>
   )

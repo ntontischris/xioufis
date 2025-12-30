@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Users,
-  FileText,
+  ClipboardList,
   MessageSquare,
   Shield,
   Settings,
@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Πολίτες', href: '/dashboard/citizens', icon: Users },
-  { name: 'Αιτήματα', href: '/dashboard/requests', icon: FileText },
+  { name: 'Αιτήματα', href: '/dashboard/requests', icon: ClipboardList },
   { name: 'Επικοινωνίες', href: '/dashboard/communications', icon: MessageSquare },
   { name: 'Στρατιωτικό Προσωπικό', href: '/dashboard/military', icon: Shield },
 ]
@@ -38,7 +38,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col bg-card border-r">
+    <div className="fixed inset-y-0 left-0 flex h-full w-64 flex-col bg-card border-r">
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-6 border-b">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">

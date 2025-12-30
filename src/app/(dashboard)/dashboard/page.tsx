@@ -7,7 +7,7 @@ import { CategoryChart } from '@/components/dashboard/CategoryChart'
 import { StatusChart } from '@/components/dashboard/StatusChart'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { RecentActivity } from '@/components/dashboard/RecentActivity'
-import { Users, FileText, Clock, CheckCircle, Loader2, PieChart, TrendingUp, Activity } from 'lucide-react'
+import { Users, FileText, Clock, CheckCircle, Loader2, PieChart, TrendingUp, Activity, Shield, MessageSquare } from 'lucide-react'
 
 export default function DashboardPage() {
   const { stats, loading, error } = useDashboardStats()
@@ -19,6 +19,14 @@ export default function DashboardPage() {
       icon: Users,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
+    },
+    {
+      title: 'Στρατιωτικοί',
+      value: stats.totalMilitary,
+      subtitle: `${stats.totalConscripts} κληρωτοί, ${stats.totalPermanent} μόνιμοι`,
+      icon: Shield,
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-500/10',
     },
     {
       title: 'Ενεργά Αιτήματα',
@@ -41,6 +49,13 @@ export default function DashboardPage() {
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
     },
+    {
+      title: 'Επικοινωνίες',
+      value: stats.totalCommunications,
+      icon: MessageSquare,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/10',
+    },
   ]
 
   if (error) {
@@ -61,7 +76,7 @@ export default function DashboardPage() {
       <Header title="Dashboard" />
       <div className="p-6 space-y-6">
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {statCards.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -76,7 +91,12 @@ export default function DashboardPage() {
                 {loading ? (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 ) : (
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    {stat.subtitle && (
+                      <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

@@ -19,6 +19,7 @@ import { MilitaryTable } from '@/components/military/MilitaryTable'
 import { useMilitary } from '@/lib/hooks/useMilitary'
 import { MILITARY_TYPE_OPTIONS, ESSO_LETTER_OPTIONS } from '@/lib/utils/constants'
 import { Plus, Search, Shield, Filter, X } from 'lucide-react'
+import { normalizeForSearch } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -71,12 +72,13 @@ function MilitaryPageContent() {
   }, [])
 
   const filteredMilitary = military.filter((m) => {
-    const searchLower = search.toLowerCase()
+    // Accent-insensitive search
+    const normalizedSearch = normalizeForSearch(search)
     const matchesSearch =
       !search ||
-      m.surname.toLowerCase().includes(searchLower) ||
-      m.first_name.toLowerCase().includes(searchLower) ||
-      m.mobile?.toLowerCase().includes(searchLower)
+      normalizeForSearch(m.surname).includes(normalizedSearch) ||
+      normalizeForSearch(m.first_name).includes(normalizedSearch) ||
+      normalizeForSearch(m.mobile || '').includes(normalizedSearch)
 
     const matchesType = !typeFilter || m.military_type === typeFilter
 

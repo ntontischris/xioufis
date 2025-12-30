@@ -104,6 +104,55 @@ export async function deleteCommunication(id: string): Promise<ActionResponse> {
 }
 
 /**
+ * Update an existing communication
+ */
+export async function updateCommunication(
+  id: string,
+  formData: CommunicationFormData
+): Promise<ActionResponse<{ id: string }>> {
+  try {
+    // Validate form data
+    const validatedData = communicationSchema.parse(formData)
+
+    const supabase = await createClient()
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'Δεν είστε συνδεδεμένος' }
+    }
+
+    const { data, error } = await supabase
+      .from('communications')
+      .update({
+        citizen_id: validatedData.citizen_id,
+        communication_date: validatedData.communication_date,
+        comm_type: validatedData.comm_type,
+        notes: validatedData.notes || null,
+      })
+      .eq('id', id)
+      .select('id')
+      .single()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/communications')
+    revalidatePath(`/dashboard/communications/${id}`)
+    revalidatePath(`/dashboard/citizens/${validatedData.citizen_id}`)
+    return { success: true, data: { id: data.id } }
+  } catch (error) {
+    console.error('Update communication error:', error)
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Σφάλμα κατά την ενημέρωση επικοινωνίας' }
+  }
+}
+
+/**
  * Get a single communication by ID
  */
 export async function getCommunication(id: string) {

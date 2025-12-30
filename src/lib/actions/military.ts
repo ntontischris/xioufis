@@ -14,7 +14,7 @@ type ActionResponse<T = null> = {
 
 /**
  * Create new military personnel
- * Note: The database trigger will auto-create a citizen if citizen_id is null
+ * If citizen_id is not provided, automatically creates a linked citizen record
  */
 export async function createMilitary(
   formData: MilitaryFormData
@@ -31,9 +31,35 @@ export async function createMilitary(
       return { success: false, error: 'Δεν είστε συνδεδεμένος' }
     }
 
+    let citizenId = validatedData.citizen_id || null
+
+    // If no citizen_id provided, create a new citizen first
+    if (!citizenId) {
+      const { data: newCitizen, error: citizenError } = await supabase
+        .from('citizens')
+        .insert({
+          surname: validatedData.surname,
+          first_name: validatedData.first_name,
+          father_name: validatedData.father_name || null,
+          mobile: validatedData.mobile || null,
+          email: validatedData.email || null,
+          contact_category: 'MILITARY',
+          notes: `Δημιουργήθηκε αυτόματα από εγγραφή στρατιωτικού προσωπικού`,
+        })
+        .select('id')
+        .single()
+
+      if (citizenError) {
+        console.error('Error creating citizen:', citizenError)
+        return { success: false, error: 'Σφάλμα κατά τη δημιουργία πολίτη: ' + citizenError.message }
+      }
+
+      citizenId = newCitizen.id
+    }
+
     // Prepare insert data
     const insertData: MilitaryPersonnelInsert = {
-      citizen_id: validatedData.citizen_id || null,
+      citizen_id: citizenId,
       military_type: validatedData.military_type,
       surname: validatedData.surname,
       first_name: validatedData.first_name,
@@ -158,6 +184,7 @@ export async function updateMilitary(
 
 /**
  * Delete military personnel
+ * Also deletes the linked citizen if it was auto-created (contact_category = 'MILITARY')
  */
 export async function deleteMilitary(id: string): Promise<ActionResponse> {
   try {
@@ -169,6 +196,14 @@ export async function deleteMilitary(id: string): Promise<ActionResponse> {
       return { success: false, error: 'Δεν είστε συνδεδεμένος' }
     }
 
+    // First, get the military record to find the linked citizen
+    const { data: military } = await supabase
+      .from('military_personnel')
+      .select('citizen_id')
+      .eq('id', id)
+      .single()
+
+    // Delete the military record
     const { error } = await supabase
       .from('military_personnel')
       .delete()
@@ -179,7 +214,25 @@ export async function deleteMilitary(id: string): Promise<ActionResponse> {
       return { success: false, error: error.message }
     }
 
+    // If there's a linked citizen with category 'MILITARY', delete them too
+    if (military?.citizen_id) {
+      const { data: citizen } = await supabase
+        .from('citizens')
+        .select('id, contact_category')
+        .eq('id', military.citizen_id)
+        .single()
+
+      // Only delete if the citizen was auto-created for military
+      if (citizen?.contact_category === 'MILITARY') {
+        await supabase
+          .from('citizens')
+          .delete()
+          .eq('id', military.citizen_id)
+      }
+    }
+
     revalidatePath('/dashboard/military')
+    revalidatePath('/dashboard/citizens')
     return { success: true }
   } catch (error) {
     console.error('Delete military error:', error)

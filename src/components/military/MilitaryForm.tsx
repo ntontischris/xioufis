@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useTransition, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +41,7 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
 
   const defaultValues = military
     ? {
-        citizen_id: military.citizen_id || '',
+        citizen_id: military.citizen_id || undefined,
         military_type: military.military_type,
         surname: military.surname,
         first_name: military.first_name,
@@ -65,7 +65,7 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
         notes: military.notes || '',
       }
     : {
-        citizen_id: '',
+        citizen_id: undefined,
         military_type: 'CONSCRIPT',
         surname: '',
         first_name: '',
@@ -103,6 +103,13 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
   const watchMilitaryType = watch('military_type')
   const isConscript = watchMilitaryType === 'CONSCRIPT'
 
+  // Ensure all Select fields are properly initialized on mount
+  useEffect(() => {
+    if (mode === 'create') {
+      setValue('military_type', 'CONSCRIPT', { shouldDirty: true })
+    }
+  }, [mode, setValue])
+
   const onSubmit = (data: MilitaryFormData) => {
     startTransition(async () => {
       try {
@@ -131,8 +138,29 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
     })
   }
 
+  const onError = () => {
+    toast.error('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία')
+  }
+
+  const hasErrors = Object.keys(errors).length > 0
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
+      {/* Validation Errors Summary */}
+      {hasErrors && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-800">
+            Παρακαλώ διορθώστε τα παρακάτω σφάλματα:
+          </p>
+          <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field}>
+                {String((error as { message?: string })?.message || `Σφάλμα στο πεδίο: ${field}`)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {/* Basic Info */}
       <Card>
         <CardHeader>
@@ -148,7 +176,7 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
             </Label>
             <Select
               value={watch('military_type') || 'CONSCRIPT'}
-              onValueChange={(value) => setValue('military_type', value)}
+              onValueChange={(value) => setValue('military_type', value, { shouldValidate: true })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Επιλέξτε τύπο" />
@@ -204,7 +232,9 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="mobile">{LABELS.mobile}</Label>
+            <Label htmlFor="mobile">
+              {LABELS.mobile} <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="mobile"
               type="tel"
@@ -217,7 +247,9 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">{LABELS.email}</Label>
+            <Label htmlFor="email">
+              {LABELS.email} <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
@@ -227,6 +259,9 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
             {errors.email && (
               <p className="text-sm text-red-500">{String(errors.email.message)}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+              * Απαιτείται τουλάχιστον κινητό ή email
+            </p>
           </div>
         </CardContent>
       </Card>

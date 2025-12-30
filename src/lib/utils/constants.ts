@@ -74,6 +74,7 @@ export const CONTACT_CATEGORY_OPTIONS = [
   { value: 'GDPR', label: 'GDPR' },
   { value: 'REQUEST', label: 'Αίτημα' },
   { value: 'BOTH', label: 'GDPR & Αίτημα' },
+  { value: 'MILITARY', label: 'Στρατιωτικό' },
 ] as const
 
 // Request category options

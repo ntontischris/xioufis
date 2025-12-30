@@ -26,8 +26,8 @@ export function formatGreekPhone(phone: string | null | undefined): string {
   return phone
 }
 
-// Citizen form schema
-export const citizenSchema = z.object({
+// Base citizen fields (without refinement for composition)
+const citizenBaseFields = {
   surname: z.string().min(1, 'Το επίθετο είναι υποχρεωτικό'),
   first_name: z.string().min(1, 'Το όνομα είναι υποχρεωτικό'),
   father_name: z.string().optional().nullable(),
@@ -61,11 +61,14 @@ export const citizenSchema = z.object({
   area: z.string().optional().nullable(),
   municipality: z.string().optional().nullable(),
   electoral_district: z.string().optional().nullable(),
-  contact_category: z.string().default('GDPR'),
+  contact_category: z.string().min(1, 'Επιλέξτε κατηγορία επαφής'),
   profession: z.string().optional().nullable(),
   assigned_user_id: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
-}).refine(
+}
+
+// Citizen form schema
+export const citizenSchema = z.object(citizenBaseFields).refine(
   (data) => data.mobile || data.landline || data.email,
   {
     message: 'Απαιτείται τουλάχιστον ένα στοιχείο επικοινωνίας (κινητό, σταθερό ή email)',
@@ -77,7 +80,7 @@ export const citizenSchema = z.object({
 export const requestSchema = z.object({
   citizen_id: z.string().uuid('Επιλέξτε πολίτη'),
   category: z.string().min(1, 'Επιλέξτε κατηγορία'),
-  status: z.string().default('PENDING'),
+  status: z.string().min(1, 'Επιλέξτε κατάσταση'),
   request_text: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   submitted_at: z.string().optional(),
@@ -94,7 +97,7 @@ export const communicationSchema = z.object({
 
 // Military personnel form schema
 export const militarySchema = z.object({
-  citizen_id: z.string().uuid().optional().nullable(),
+  citizen_id: z.string().uuid().optional().nullable().or(z.literal('')),
   military_type: z.string().min(1, 'Επιλέξτε τύπο'),
   surname: z.string().min(1, 'Το επώνυμο είναι υποχρεωτικό'),
   first_name: z.string().min(1, 'Το όνομα είναι υποχρεωτικό'),
@@ -134,7 +137,36 @@ export const militarySchema = z.object({
   }
 )
 
+// Combined citizen + military form schema (for creating citizen with military info)
+export const citizenWithMilitarySchema = z.object({
+  ...citizenBaseFields,
+  // Military fields - all optional (only used when contact_category is MILITARY)
+  military_type: z.string().optional(),
+  esso_year: z.number().optional().nullable(),
+  esso_letter: z.string().optional().nullable(),
+  military_number: z.string().optional().nullable(),
+  conscript_wish: z.string().optional().nullable(),
+  training_center: z.string().optional().nullable(),
+  presentation_date: z.string().optional().nullable(),
+  assignment: z.string().optional().nullable(),
+  assignment_date: z.string().optional().nullable(),
+  transfer: z.string().optional().nullable(),
+  transfer_date: z.string().optional().nullable(),
+  rank: z.string().optional().nullable(),
+  service_unit: z.string().optional().nullable(),
+  permanent_wish: z.string().optional().nullable(),
+  service_number: z.string().optional().nullable(),
+  military_notes: z.string().optional().nullable(),
+}).refine(
+  (data) => data.mobile || data.landline || data.email,
+  {
+    message: 'Απαιτείται τουλάχιστον ένα στοιχείο επικοινωνίας (κινητό, σταθερό ή email)',
+    path: ['mobile'],
+  }
+)
+
 export type CitizenFormData = z.infer<typeof citizenSchema>
+export type CitizenWithMilitaryFormData = z.infer<typeof citizenWithMilitarySchema>
 export type RequestFormData = z.infer<typeof requestSchema>
 export type CommunicationFormData = z.infer<typeof communicationSchema>
 export type MilitaryFormData = z.infer<typeof militarySchema>

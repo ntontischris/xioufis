@@ -18,26 +18,38 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { communicationSchema, type CommunicationFormData } from '@/lib/utils/validators'
-import { createCommunication } from '@/lib/actions/communications'
+import { createCommunication, updateCommunication } from '@/lib/actions/communications'
 import { LABELS, COMMUNICATION_TYPE_OPTIONS } from '@/lib/utils/constants'
+import type { Communication } from '@/types/database'
 import { Loader2, Save, ArrowLeft } from 'lucide-react'
 
 interface CommunicationFormProps {
-  citizenId: string
+  communication?: Communication
+  citizenId?: string
   citizenName?: string
+  mode?: 'create' | 'edit'
   onSuccess?: () => void
 }
 
-export function CommunicationForm({ citizenId, citizenName, onSuccess }: CommunicationFormProps) {
+export function CommunicationForm({ communication, citizenId, citizenName, mode = 'create', onSuccess }: CommunicationFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const defaultValues = {
-    citizen_id: citizenId,
-    communication_date: new Date().toISOString().split('T')[0],
-    comm_type: '',
-    notes: '',
-  }
+  const effectiveCitizenId = communication?.citizen_id || citizenId || ''
+
+  const defaultValues = communication
+    ? {
+        citizen_id: communication.citizen_id,
+        communication_date: communication.communication_date,
+        comm_type: communication.comm_type,
+        notes: communication.notes || '',
+      }
+    : {
+        citizen_id: effectiveCitizenId,
+        communication_date: new Date().toISOString().split('T')[0],
+        comm_type: '',
+        notes: '',
+      }
 
   const {
     register,
@@ -53,14 +65,22 @@ export function CommunicationForm({ citizenId, citizenName, onSuccess }: Communi
   const onSubmit = (data: CommunicationFormData) => {
     startTransition(async () => {
       try {
-        const result = await createCommunication(data)
+        const result = mode === 'edit' && communication
+          ? await updateCommunication(communication.id, data)
+          : await createCommunication(data)
 
         if (result.success) {
-          toast.success('Η επικοινωνία καταχωρήθηκε επιτυχώς!')
+          toast.success(
+            mode === 'edit'
+              ? 'Η επικοινωνία ενημερώθηκε επιτυχώς!'
+              : 'Η επικοινωνία καταχωρήθηκε επιτυχώς!'
+          )
           if (onSuccess) {
             onSuccess()
+          } else if (mode === 'edit' && communication) {
+            router.push(`/dashboard/communications/${communication.id}`)
           } else {
-            router.push(`/dashboard/citizens/${citizenId}`)
+            router.push(`/dashboard/citizens/${effectiveCitizenId}`)
           }
         } else {
           toast.error(result.error || 'Προέκυψε σφάλμα')
@@ -155,7 +175,7 @@ export function CommunicationForm({ citizenId, citizenName, onSuccess }: Communi
           ) : (
             <>
               <Save className="mr-2 h-4 w-4" />
-              Καταχώρηση
+              {mode === 'edit' ? 'Ενημέρωση' : 'Καταχώρηση'}
             </>
           )}
         </Button>

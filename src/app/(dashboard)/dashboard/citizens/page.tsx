@@ -30,6 +30,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatGreekPhone } from '@/lib/utils/validators'
+import { normalizeForSearch } from '@/lib/utils'
 import { getLabel, MUNICIPALITY_OPTIONS, ELECTORAL_DISTRICT_OPTIONS } from '@/lib/utils/constants'
 import Link from 'next/link'
 
@@ -92,16 +93,17 @@ function CitizensPageContent() {
   }, [])
 
   const filteredCitizens = citizens.filter((citizen) => {
-    const searchLower = search.toLowerCase()
+    // Accent-insensitive search using normalizeForSearch
+    const normalizedSearch = normalizeForSearch(search)
     const matchesSearch = !search || (
-      citizen.surname.toLowerCase().includes(searchLower) ||
-      citizen.first_name.toLowerCase().includes(searchLower) ||
-      citizen.mobile?.toLowerCase().includes(searchLower) ||
-      citizen.email?.toLowerCase().includes(searchLower)
+      normalizeForSearch(citizen.surname).includes(normalizedSearch) ||
+      normalizeForSearch(citizen.first_name).includes(normalizedSearch) ||
+      normalizeForSearch(citizen.mobile || '').includes(normalizedSearch) ||
+      normalizeForSearch(citizen.email || '').includes(normalizedSearch)
     )
-    // First name filter - matches if first name starts with the filter or equals it
+    // First name filter - accent-insensitive
     const matchesFirstName = !firstNameFilter ||
-      citizen.first_name.toLowerCase().startsWith(firstNameFilter.toLowerCase())
+      normalizeForSearch(citizen.first_name).startsWith(normalizeForSearch(firstNameFilter))
     const matchesMunicipality = !municipalityFilter || citizen.municipality === municipalityFilter
     const matchesDistrict = !districtFilter || citizen.electoral_district === districtFilter
 

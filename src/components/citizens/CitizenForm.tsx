@@ -17,16 +17,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { citizenSchema, type CitizenFormData } from '@/lib/utils/validators'
-import { createCitizen, updateCitizen } from '@/lib/actions/citizens'
+import { citizenWithMilitarySchema, type CitizenWithMilitaryFormData } from '@/lib/utils/validators'
+import { createCitizenWithMilitary, updateCitizen } from '@/lib/actions/citizens'
 import {
   LABELS,
   MUNICIPALITY_OPTIONS,
   ELECTORAL_DISTRICT_OPTIONS,
   CONTACT_CATEGORY_OPTIONS,
+  MILITARY_TYPE_OPTIONS,
+  ESSO_LETTER_OPTIONS,
 } from '@/lib/utils/constants'
 import type { Citizen } from '@/types/database'
-import { Loader2, Save, ArrowLeft } from 'lucide-react'
+import { Loader2, Save, ArrowLeft, Shield } from 'lucide-react'
 
 interface CitizenFormProps {
   citizen?: Citizen
@@ -36,6 +38,9 @@ interface CitizenFormProps {
 export function CitizenForm({ citizen, mode }: CitizenFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const currentYear = new Date().getFullYear()
+  const essoYearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i - 1)
 
   const defaultValues = citizen
     ? {
@@ -54,6 +59,23 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
         contact_category: citizen.contact_category || 'GDPR',
         profession: citizen.profession || '',
         notes: citizen.notes || '',
+        // Military fields (empty for edit mode - military is edited separately)
+        military_type: '',
+        esso_year: undefined,
+        esso_letter: '',
+        military_number: '',
+        conscript_wish: '',
+        training_center: '',
+        presentation_date: '',
+        assignment: '',
+        assignment_date: '',
+        transfer: '',
+        transfer_date: '',
+        rank: '',
+        service_unit: '',
+        permanent_wish: '',
+        service_number: '',
+        military_notes: '',
       }
     : {
         surname: '',
@@ -71,6 +93,23 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
         contact_category: 'GDPR',
         profession: '',
         notes: '',
+        // Military fields
+        military_type: '',
+        esso_year: currentYear,
+        esso_letter: '',
+        military_number: '',
+        conscript_wish: '',
+        training_center: '',
+        presentation_date: '',
+        assignment: '',
+        assignment_date: '',
+        transfer: '',
+        transfer_date: '',
+        rank: '',
+        service_unit: '',
+        permanent_wish: '',
+        service_number: '',
+        military_notes: '',
       }
 
   const {
@@ -79,17 +118,22 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<CitizenFormData>({
-    resolver: zodResolver(citizenSchema),
-    defaultValues: defaultValues as CitizenFormData,
+  } = useForm<CitizenWithMilitaryFormData>({
+    resolver: zodResolver(citizenWithMilitarySchema),
+    defaultValues: defaultValues as CitizenWithMilitaryFormData,
   })
 
-  const onSubmit = (data: CitizenFormData) => {
+  const watchCategory = watch('contact_category')
+  const watchMilitaryType = watch('military_type')
+  const isMilitaryCategory = watchCategory === 'MILITARY'
+  const isConscript = watchMilitaryType === 'CONSCRIPT'
+
+  const onSubmit = (data: CitizenWithMilitaryFormData) => {
     startTransition(async () => {
       try {
         const result =
           mode === 'create'
-            ? await createCitizen(data)
+            ? await createCitizenWithMilitary(data)
             : await updateCitizen(citizen!.id, data)
 
         if (result.success) {
@@ -179,7 +223,15 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
             <Label htmlFor="contact_category">{LABELS.contact_category}</Label>
             <Select
               value={watch('contact_category') || 'GDPR'}
-              onValueChange={(value) => setValue('contact_category', value)}
+              onValueChange={(value) => {
+                setValue('contact_category', value, { shouldDirty: true })
+                // Auto-set military_type when selecting MILITARY category
+                if (value === 'MILITARY') {
+                  setValue('military_type', 'CONSCRIPT', { shouldDirty: true })
+                } else {
+                  setValue('military_type', '', { shouldDirty: true })
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Επιλέξτε κατηγορία" />
@@ -201,12 +253,17 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
         <CardHeader>
           <CardTitle className="text-lg">Στοιχεία Επικοινωνίας</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Απαιτείται τουλάχιστον ένα στοιχείο επικοινωνίας
+            {isMilitaryCategory
+              ? 'Για στρατιωτικό απαιτείται κινητό ή email (όχι μόνο σταθερό)'
+              : 'Απαιτείται τουλάχιστον ένα στοιχείο επικοινωνίας'
+            }
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="mobile">{LABELS.mobile}</Label>
+            <Label htmlFor="mobile">
+              {LABELS.mobile} {isMilitaryCategory && <span className="text-red-500">*</span>}
+            </Label>
             <Input
               id="mobile"
               type="tel"
@@ -232,7 +289,9 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">{LABELS.email}</Label>
+            <Label htmlFor="email">
+              {LABELS.email} {isMilitaryCategory && <span className="text-red-500">*</span>}
+            </Label>
             <Input
               id="email"
               type="email"
@@ -241,6 +300,9 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
             />
             {errors.email && (
               <p className="text-sm text-red-500">{String(errors.email.message)}</p>
+            )}
+            {isMilitaryCategory && (
+              <p className="text-xs text-muted-foreground">* Απαιτείται κινητό ή email</p>
             )}
           </div>
         </CardContent>
@@ -336,6 +398,219 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
           />
         </CardContent>
       </Card>
+
+      {/* Military Fields - shown when category is MILITARY */}
+      {isMilitaryCategory && mode === 'create' && (
+        <>
+          <Card className="border-indigo-200 bg-indigo-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg text-indigo-700">
+                <Shield className="h-5 w-5" />
+                Στοιχεία Στρατιωτικού
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="military_type">
+                  {LABELS.military_type} <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={watch('military_type') || 'CONSCRIPT'}
+                  onValueChange={(value) => setValue('military_type', value, { shouldValidate: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Επιλέξτε τύπο" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MILITARY_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Conscript Fields */}
+          {isConscript ? (
+            <Card className="border-indigo-200">
+              <CardHeader>
+                <CardTitle className="text-lg">Στοιχεία Στρατιώτη</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="esso_year">{LABELS.esso_year}</Label>
+                  <Select
+                    value={watch('esso_year')?.toString() || ''}
+                    onValueChange={(value) => setValue('esso_year', parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Επιλέξτε έτος" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {essoYearOptions.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="esso_letter">{LABELS.esso_letter}</Label>
+                  <Select
+                    value={watch('esso_letter') || ''}
+                    onValueChange={(value) => setValue('esso_letter', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Επιλέξτε ΕΣΣΟ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESSO_LETTER_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="military_number">{LABELS.military_number}</Label>
+                  <Input
+                    id="military_number"
+                    {...register('military_number')}
+                    placeholder="ΑΣΜ"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="training_center">{LABELS.training_center}</Label>
+                  <Input
+                    id="training_center"
+                    {...register('training_center')}
+                    placeholder="Κέντρο εκπαίδευσης"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="presentation_date">{LABELS.presentation_date}</Label>
+                  <Input
+                    id="presentation_date"
+                    type="date"
+                    {...register('presentation_date')}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="conscript_wish">{LABELS.conscript_wish}</Label>
+                  <Input
+                    id="conscript_wish"
+                    {...register('conscript_wish')}
+                    placeholder="Επιθυμία τοποθέτησης"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="assignment">{LABELS.assignment}</Label>
+                  <Input
+                    id="assignment"
+                    {...register('assignment')}
+                    placeholder="Τοποθέτηση"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="assignment_date">{LABELS.assignment_date}</Label>
+                  <Input
+                    id="assignment_date"
+                    type="date"
+                    {...register('assignment_date')}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transfer">{LABELS.transfer}</Label>
+                  <Input
+                    id="transfer"
+                    {...register('transfer')}
+                    placeholder="Μετάθεση/Απόσπαση"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transfer_date">{LABELS.transfer_date}</Label>
+                  <Input
+                    id="transfer_date"
+                    type="date"
+                    {...register('transfer_date')}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : watchMilitaryType === 'PERMANENT' ? (
+            <Card className="border-indigo-200">
+              <CardHeader>
+                <CardTitle className="text-lg">Στοιχεία Μόνιμου</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="rank">{LABELS.rank}</Label>
+                  <Input
+                    id="rank"
+                    {...register('rank')}
+                    placeholder="Βαθμός"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="service_unit">{LABELS.service_unit}</Label>
+                  <Input
+                    id="service_unit"
+                    {...register('service_unit')}
+                    placeholder="Μονάδα"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="service_number">{LABELS.service_number}</Label>
+                  <Input
+                    id="service_number"
+                    {...register('service_number')}
+                    placeholder="ΑΜ"
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                  <Label htmlFor="permanent_wish">{LABELS.permanent_wish}</Label>
+                  <Input
+                    id="permanent_wish"
+                    {...register('permanent_wish')}
+                    placeholder="Επιθυμία"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {/* Military Notes */}
+          <Card className="border-indigo-200">
+            <CardHeader>
+              <CardTitle className="text-lg">Σημειώσεις Στρατιωτικού</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                {...register('military_notes')}
+                placeholder="Σημειώσεις για το στρατιωτικό..."
+                rows={3}
+              />
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* Form Actions */}
       <div className="flex items-center justify-between">

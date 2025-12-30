@@ -49,14 +49,13 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
     return new Date(dateString).toLocaleDateString('el-GR')
   }
 
-  const handleRowClick = (citizenId: string | undefined, e: React.MouseEvent) => {
-    if (!citizenId) return
+  const handleRowClick = (communicationId: string, e: React.MouseEvent) => {
     // Don't navigate if clicking a link or button
     const target = e.target as HTMLElement
     if (target.closest('a') || target.closest('button')) {
       return
     }
-    router.push(`/dashboard/citizens/${citizenId}`)
+    router.push(`/dashboard/communications/${communicationId}`)
   }
 
   return (
@@ -74,8 +73,8 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
         {communications.map((comm) => (
           <TableRow
             key={comm.id}
-            className={comm.citizen ? 'cursor-pointer hover:bg-muted/50' : ''}
-            onClick={(e) => handleRowClick(comm.citizen?.id, e)}
+            className="cursor-pointer hover:bg-muted/50"
+            onClick={(e) => handleRowClick(comm.id, e)}
           >
             {showCitizen && (
               <TableCell className="font-medium">
@@ -102,13 +101,11 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
               {comm.notes || '-'}
             </TableCell>
             <TableCell className="text-right">
-              {comm.citizen && (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/dashboard/citizens/${comm.citizen.id}`}>
-                    Προβολή Πολίτη
-                  </Link>
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/dashboard/communications/${comm.id}`}>
+                  Προβολή
+                </Link>
+              </Button>
             </TableCell>
           </TableRow>
         ))}

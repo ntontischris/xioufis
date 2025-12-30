@@ -46,8 +46,8 @@ export function CommunicationForm({ citizenId, citizenName, onSuccess }: Communi
     watch,
     formState: { errors },
   } = useForm<CommunicationFormData>({
-    resolver: zodResolver(communicationSchema) as any,
-    defaultValues,
+    resolver: zodResolver(communicationSchema),
+    defaultValues: defaultValues as CommunicationFormData,
   })
 
   const onSubmit = (data: CommunicationFormData) => {

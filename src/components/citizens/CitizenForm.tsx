@@ -79,10 +79,9 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
     setValue,
     watch,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm<any>({
-    resolver: zodResolver(citizenSchema) as any,
-    defaultValues,
+  } = useForm<CitizenFormData>({
+    resolver: zodResolver(citizenSchema),
+    defaultValues: defaultValues as CitizenFormData,
   })
 
   const onSubmit = (data: CitizenFormData) => {

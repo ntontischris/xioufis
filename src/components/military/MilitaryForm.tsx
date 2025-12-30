@@ -96,8 +96,8 @@ export function MilitaryForm({ military, mode }: MilitaryFormProps) {
     watch,
     formState: { errors },
   } = useForm<MilitaryFormData>({
-    resolver: zodResolver(militarySchema) as any,
-    defaultValues,
+    resolver: zodResolver(militarySchema),
+    defaultValues: defaultValues as MilitaryFormData,
   })
 
   const watchMilitaryType = watch('military_type')

@@ -66,8 +66,8 @@ export function RequestForm({ request, citizenId, citizenName, mode, onSuccess }
     watch,
     formState: { errors },
   } = useForm<RequestFormData>({
-    resolver: zodResolver(requestSchema) as any,
-    defaultValues,
+    resolver: zodResolver(requestSchema),
+    defaultValues: defaultValues as RequestFormData,
   })
 
   const watchStatus = watch('status')

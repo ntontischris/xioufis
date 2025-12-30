@@ -194,7 +194,7 @@ function getCommTypeLabel(type: string): string {
   return labels[type] || type
 }
 
-function getMonthlyTrend(requests: any[]): { month: string; requests: number; completed: number }[] {
+function getMonthlyTrend(requests: { submitted_at: string; status: string }[]): { month: string; requests: number; completed: number }[] {
   const months: { month: string; requests: number; completed: number }[] = []
   const today = new Date()
 

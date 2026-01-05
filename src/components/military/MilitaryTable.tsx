@@ -13,20 +13,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { getLabel, MILITARY_TYPE_OPTIONS } from '@/lib/utils/constants'
-import type { MilitaryPersonnel } from '@/types/database'
-import { User, Shield } from 'lucide-react'
-
-interface CitizenInfo {
-  id: string
-  surname: string
-  first_name: string
-  mobile: string | null
-  email: string | null
-}
-
-interface MilitaryWithCitizen extends MilitaryPersonnel {
-  citizen?: CitizenInfo | null
-}
+import { User, Shield, ClipboardList } from 'lucide-react'
+import type { MilitaryWithCitizen } from '@/lib/hooks/useMilitary'
 
 interface MilitaryTableProps {
   military: MilitaryWithCitizen[]
@@ -53,6 +41,7 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
           <TableHead>ΕΣΣΟ</TableHead>
           <TableHead>Κινητό</TableHead>
           <TableHead>Τοποθέτηση/Μονάδα</TableHead>
+          <TableHead>Αιτήματα</TableHead>
           <TableHead className="text-right">Ενέργειες</TableHead>
         </TableRow>
       </TableHeader>
@@ -93,6 +82,31 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
               {m.military_type === 'CONSCRIPT'
                 ? m.assignment || m.training_center || '-'
                 : m.service_unit || '-'}
+            </TableCell>
+            <TableCell>
+              {m.requests_total > 0 && m.citizen_id ? (
+                <Link
+                  href={`/dashboard/requests?citizen=${m.citizen_id}`}
+                  className="flex items-center gap-1 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {m.requests_pending > 0 && (
+                      <Badge variant="destructive" className="mr-1 text-xs">
+                        {m.requests_pending} εκκρεμή
+                      </Badge>
+                    )}
+                    {m.requests_completed > 0 && (
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                        {m.requests_completed} ολοκλ.
+                      </Badge>
+                    )}
+                  </span>
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
             </TableCell>
             <TableCell className="text-right">
               <Button variant="ghost" size="sm" asChild>

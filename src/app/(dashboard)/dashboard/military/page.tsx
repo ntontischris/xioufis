@@ -18,7 +18,7 @@ import {
 import { MilitaryTable } from '@/components/military/MilitaryTable'
 import { useMilitary } from '@/lib/hooks/useMilitary'
 import { MILITARY_TYPE_OPTIONS, ESSO_LETTER_OPTIONS } from '@/lib/utils/constants'
-import { Plus, Search, Shield, Filter, X } from 'lucide-react'
+import { Plus, Search, Shield, Filter, X, ClipboardList } from 'lucide-react'
 import { normalizeForSearch } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
@@ -45,7 +45,7 @@ function MilitaryPageSkeleton() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TableSkeleton rows={10} cols={6} />
+            <TableSkeleton rows={10} cols={7} />
           </CardContent>
         </Card>
       </div>
@@ -53,11 +53,20 @@ function MilitaryPageSkeleton() {
   )
 }
 
+// Request status filter options
+const REQUEST_STATUS_FILTER_OPTIONS = [
+  { value: 'HAS_PENDING', label: 'Με εκκρεμή αιτήματα' },
+  { value: 'ALL_COMPLETED', label: 'Όλα ολοκληρωμένα' },
+  { value: 'HAS_REQUESTS', label: 'Με αιτήματα' },
+  { value: 'NO_REQUESTS', label: 'Χωρίς αιτήματα' },
+] as const
+
 function MilitaryPageContent() {
   const { military, loading, error } = useMilitary()
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('')
   const [essoFilter, setEssoFilter] = useState<string>('')
+  const [requestStatusFilter, setRequestStatusFilter] = useState<string>('')
 
   const currentYear = new Date().getFullYear()
   const essoYearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i - 1)
@@ -93,7 +102,19 @@ function MilitaryPageContent() {
       matchesEsso = false
     }
 
-    return matchesSearch && matchesType && matchesEsso
+    // Request status filter
+    let matchesRequestStatus = true
+    if (requestStatusFilter === 'HAS_PENDING') {
+      matchesRequestStatus = m.requests_pending > 0
+    } else if (requestStatusFilter === 'ALL_COMPLETED') {
+      matchesRequestStatus = m.requests_total > 0 && m.requests_pending === 0 && m.requests_not_completed === 0
+    } else if (requestStatusFilter === 'HAS_REQUESTS') {
+      matchesRequestStatus = m.requests_total > 0
+    } else if (requestStatusFilter === 'NO_REQUESTS') {
+      matchesRequestStatus = m.requests_total === 0
+    }
+
+    return matchesSearch && matchesType && matchesEsso && matchesRequestStatus
   })
 
   // Pagination
@@ -109,9 +130,10 @@ function MilitaryPageContent() {
     setTypeFilter('')
     setEssoFilter('')
     setSearch('')
+    setRequestStatusFilter('')
   }
 
-  const hasFilters = typeFilter || essoFilter || search
+  const hasFilters = typeFilter || essoFilter || search || requestStatusFilter
 
   return (
     <>
@@ -169,6 +191,19 @@ function MilitaryPageContent() {
               )}
             </SelectContent>
           </Select>
+          <Select value={requestStatusFilter} onValueChange={(val) => setRequestStatusFilter(val === 'all' ? '' : val)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Κατάσταση Αιτημάτων" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Όλες οι καταστάσεις</SelectItem>
+              {REQUEST_STATUS_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasFilters && (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <X className="mr-1 h-4 w-4" />
@@ -190,7 +225,7 @@ function MilitaryPageContent() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <TableSkeleton rows={10} cols={6} />
+              <TableSkeleton rows={10} cols={7} />
             ) : error ? (
               <div className="text-center py-8 text-destructive">
                 <p>Σφάλμα: {error}</p>

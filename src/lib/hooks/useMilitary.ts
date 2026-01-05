@@ -12,8 +12,13 @@ interface CitizenInfo {
   email: string | null
 }
 
-interface MilitaryWithCitizen extends MilitaryPersonnel {
+// Extended interface with request counts
+export interface MilitaryWithCitizen extends MilitaryPersonnel {
   citizen?: CitizenInfo | null
+  requests_pending: number
+  requests_completed: number
+  requests_not_completed: number
+  requests_total: number
 }
 
 interface UseMilitaryOptions {
@@ -70,11 +75,35 @@ export function useMilitary(options: UseMilitaryOptions = {}) {
         })
       }
 
-      // Combine military with citizen data
-      const militaryWithCitizens: MilitaryWithCitizen[] = militaryData.map((m) => ({
-        ...m,
-        citizen: m.citizen_id ? citizenMap.get(m.citizen_id) || null : null,
-      }))
+      // Fetch requests for all citizen IDs to count by status
+      const requestCounts = new Map<string, { pending: number; completed: number; not_completed: number }>()
+      if (citizenIds.length > 0) {
+        const { data: requestsData } = await supabase
+          .from('requests')
+          .select('citizen_id, status')
+          .in('citizen_id', citizenIds)
+
+        requestsData?.forEach((request) => {
+          const counts = requestCounts.get(request.citizen_id) || { pending: 0, completed: 0, not_completed: 0 }
+          if (request.status === 'PENDING') counts.pending++
+          else if (request.status === 'COMPLETED') counts.completed++
+          else if (request.status === 'NOT_COMPLETED') counts.not_completed++
+          requestCounts.set(request.citizen_id, counts)
+        })
+      }
+
+      // Combine military with citizen data and request counts
+      const militaryWithCitizens: MilitaryWithCitizen[] = militaryData.map((m) => {
+        const counts = m.citizen_id ? requestCounts.get(m.citizen_id) || { pending: 0, completed: 0, not_completed: 0 } : { pending: 0, completed: 0, not_completed: 0 }
+        return {
+          ...m,
+          citizen: m.citizen_id ? citizenMap.get(m.citizen_id) || null : null,
+          requests_pending: counts.pending,
+          requests_completed: counts.completed,
+          requests_not_completed: counts.not_completed,
+          requests_total: counts.pending + counts.completed + counts.not_completed,
+        }
+      })
 
       setMilitary(militaryWithCitizens)
     } catch (err) {
@@ -87,8 +116,8 @@ export function useMilitary(options: UseMilitaryOptions = {}) {
   useEffect(() => {
     fetchMilitary()
 
-    // Real-time subscription
-    const channel = supabase
+    // Real-time subscription for military personnel
+    const militaryChannel = supabase
       .channel('military-changes')
       .on(
         'postgres_changes',
@@ -99,8 +128,21 @@ export function useMilitary(options: UseMilitaryOptions = {}) {
       )
       .subscribe()
 
+    // Real-time subscription for requests (to update counts)
+    const requestsChannel = supabase
+      .channel('requests-changes-for-military')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'requests' },
+        () => {
+          fetchMilitary()
+        }
+      )
+      .subscribe()
+
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(militaryChannel)
+      supabase.removeChannel(requestsChannel)
     }
   }, [supabase, fetchMilitary])
 

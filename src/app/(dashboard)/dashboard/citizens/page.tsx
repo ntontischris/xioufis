@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useCitizens } from '@/lib/hooks/useCitizens'
-import { Plus, Search, Users, Filter, X } from 'lucide-react'
+import { Plus, Search, Users, Filter, X, ClipboardList } from 'lucide-react'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -55,13 +55,21 @@ function CitizensPageSkeleton() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TableSkeleton rows={10} cols={5} />
+            <TableSkeleton rows={10} cols={6} />
           </CardContent>
         </Card>
       </div>
     </>
   )
 }
+
+// Request status filter options
+const REQUEST_STATUS_FILTER_OPTIONS = [
+  { value: 'HAS_PENDING', label: 'Με εκκρεμή αιτήματα' },
+  { value: 'ALL_COMPLETED', label: 'Όλα ολοκληρωμένα' },
+  { value: 'HAS_REQUESTS', label: 'Με αιτήματα' },
+  { value: 'NO_REQUESTS', label: 'Χωρίς αιτήματα' },
+] as const
 
 function CitizensPageContent() {
   const router = useRouter()
@@ -70,6 +78,7 @@ function CitizensPageContent() {
   const [firstNameFilter, setFirstNameFilter] = useState<string>('')
   const [municipalityFilter, setMunicipalityFilter] = useState<string>('')
   const [districtFilter, setDistrictFilter] = useState<string>('')
+  const [requestStatusFilter, setRequestStatusFilter] = useState<string>('')
 
   // Get unique first names for suggestions
   const uniqueFirstNames = [...new Set(citizens.map(c => c.first_name))].sort()
@@ -107,7 +116,19 @@ function CitizensPageContent() {
     const matchesMunicipality = !municipalityFilter || citizen.municipality === municipalityFilter
     const matchesDistrict = !districtFilter || citizen.electoral_district === districtFilter
 
-    return matchesSearch && matchesFirstName && matchesMunicipality && matchesDistrict
+    // Request status filter
+    let matchesRequestStatus = true
+    if (requestStatusFilter === 'HAS_PENDING') {
+      matchesRequestStatus = citizen.requests_pending > 0
+    } else if (requestStatusFilter === 'ALL_COMPLETED') {
+      matchesRequestStatus = citizen.requests_total > 0 && citizen.requests_pending === 0 && citizen.requests_not_completed === 0
+    } else if (requestStatusFilter === 'HAS_REQUESTS') {
+      matchesRequestStatus = citizen.requests_total > 0
+    } else if (requestStatusFilter === 'NO_REQUESTS') {
+      matchesRequestStatus = citizen.requests_total === 0
+    }
+
+    return matchesSearch && matchesFirstName && matchesMunicipality && matchesDistrict && matchesRequestStatus
   })
 
   // Pagination
@@ -124,9 +145,10 @@ function CitizensPageContent() {
     setFirstNameFilter('')
     setMunicipalityFilter('')
     setDistrictFilter('')
+    setRequestStatusFilter('')
   }
 
-  const hasFilters = search || firstNameFilter || municipalityFilter || districtFilter
+  const hasFilters = search || firstNameFilter || municipalityFilter || districtFilter || requestStatusFilter
 
   return (
     <>
@@ -197,6 +219,19 @@ function CitizensPageContent() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={requestStatusFilter} onValueChange={(val) => setRequestStatusFilter(val === 'all' ? '' : val)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Κατάσταση Αιτημάτων" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Όλες οι καταστάσεις</SelectItem>
+              {REQUEST_STATUS_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasFilters && (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <X className="mr-1 h-4 w-4" />
@@ -218,7 +253,7 @@ function CitizensPageContent() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <TableSkeleton rows={10} cols={5} />
+              <TableSkeleton rows={10} cols={6} />
             ) : error ? (
               <div className="text-center py-8 text-destructive">
                 <p>Σφάλμα: {error}</p>
@@ -245,6 +280,7 @@ function CitizensPageContent() {
                       <TableHead>Κινητό</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Δήμος</TableHead>
+                      <TableHead>Αιτήματα</TableHead>
                       <TableHead className="text-right">Ενέργειες</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -267,6 +303,31 @@ function CitizensPageContent() {
                         <TableCell>{citizen.email || '-'}</TableCell>
                         <TableCell>
                           {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
+                        </TableCell>
+                        <TableCell>
+                          {citizen.requests_total > 0 ? (
+                            <Link
+                              href={`/dashboard/requests?citizen=${citizen.id}`}
+                              className="flex items-center gap-1 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {citizen.requests_pending > 0 && (
+                                  <Badge variant="destructive" className="mr-1 text-xs">
+                                    {citizen.requests_pending} εκκρεμή
+                                  </Badge>
+                                )}
+                                {citizen.requests_completed > 0 && (
+                                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                                    {citizen.requests_completed} ολοκλ.
+                                  </Badge>
+                                )}
+                              </span>
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" asChild>

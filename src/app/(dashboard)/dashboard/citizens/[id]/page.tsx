@@ -354,9 +354,10 @@ export default async function CitizenDetailPage({ params }: CitizenDetailPagePro
               </CardHeader>
               <CardContent className="space-y-3">
                 {communications.slice(0, 3).map((comm) => (
-                  <div
+                  <Link
                     key={comm.id}
-                    className="block border-b pb-2 last:border-0 -mx-2 px-2 py-1"
+                    href={`/dashboard/communications/${comm.id}`}
+                    className="block border-b pb-2 last:border-0 hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
                   >
                     <p className="font-medium text-sm">
                       {getLabel(COMMUNICATION_TYPE_OPTIONS, comm.comm_type)}
@@ -364,7 +365,7 @@ export default async function CitizenDetailPage({ params }: CitizenDetailPagePro
                     <p className="text-xs text-muted-foreground">
                       {formatDate(comm.communication_date)}
                     </p>
-                  </div>
+                  </Link>
                 ))}
                 {communications.length > 3 && (
                   <Button variant="link" className="p-0 h-auto" asChild>

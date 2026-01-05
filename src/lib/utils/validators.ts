@@ -157,11 +157,35 @@ export const citizenWithMilitarySchema = z.object({
   permanent_wish: z.string().optional().nullable(),
   service_number: z.string().optional().nullable(),
   military_notes: z.string().optional().nullable(),
+  // Optional Request fields (for creating citizen with request)
+  add_request: z.boolean().optional(),
+  request_category: z.string().optional(),
+  request_status: z.string().optional(),
+  request_text: z.string().optional().nullable(),
+  request_notes: z.string().optional().nullable(),
+  request_submitted_at: z.string().optional(),
+  // Optional Communication fields (for creating citizen with communication)
+  add_communication: z.boolean().optional(),
+  comm_type: z.string().optional(),
+  communication_date: z.string().optional(),
+  communication_notes: z.string().optional().nullable(),
 }).refine(
   (data) => data.mobile || data.landline || data.email,
   {
     message: 'Απαιτείται τουλάχιστον ένα στοιχείο επικοινωνίας (κινητό, σταθερό ή email)',
     path: ['mobile'],
+  }
+).refine(
+  (data) => !data.add_request || (data.request_category && data.request_status),
+  {
+    message: 'Επιλέξτε κατηγορία και κατάσταση αιτήματος',
+    path: ['request_category'],
+  }
+).refine(
+  (data) => !data.add_communication || (data.comm_type && data.communication_date),
+  {
+    message: 'Επιλέξτε τύπο και ημερομηνία επικοινωνίας',
+    path: ['comm_type'],
   }
 )
 

@@ -26,9 +26,14 @@ import {
   CONTACT_CATEGORY_OPTIONS,
   MILITARY_TYPE_OPTIONS,
   ESSO_LETTER_OPTIONS,
+  REQUEST_CATEGORY_OPTIONS,
+  REQUEST_STATUS_OPTIONS,
+  COMMUNICATION_TYPE_OPTIONS,
 } from '@/lib/utils/constants'
 import type { Citizen } from '@/types/database'
-import { Loader2, Save, ArrowLeft, Shield } from 'lucide-react'
+import { Loader2, Save, ArrowLeft, Shield, FileText, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState } from 'react'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface CitizenFormProps {
   citizen?: Citizen
@@ -110,6 +115,18 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
         permanent_wish: '',
         service_number: '',
         military_notes: '',
+        // Request fields
+        add_request: false,
+        request_category: '',
+        request_status: 'PENDING',
+        request_text: '',
+        request_notes: '',
+        request_submitted_at: new Date().toISOString().split('T')[0],
+        // Communication fields
+        add_communication: false,
+        comm_type: '',
+        communication_date: new Date().toISOString().split('T')[0],
+        communication_notes: '',
       }
 
   const {
@@ -125,8 +142,14 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
 
   const watchCategory = watch('contact_category')
   const watchMilitaryType = watch('military_type')
+  const watchAddRequest = watch('add_request')
+  const watchAddCommunication = watch('add_communication')
   const isMilitaryCategory = watchCategory === 'MILITARY'
   const isConscript = watchMilitaryType === 'CONSCRIPT'
+
+  // Collapsible state for request and communication sections
+  const [requestExpanded, setRequestExpanded] = useState(false)
+  const [communicationExpanded, setCommunicationExpanded] = useState(false)
 
   const onSubmit = (data: CitizenWithMilitaryFormData) => {
     startTransition(async () => {
@@ -398,6 +421,210 @@ export function CitizenForm({ citizen, mode }: CitizenFormProps) {
           />
         </CardContent>
       </Card>
+
+      {/* Optional Request Section - only in create mode */}
+      {mode === 'create' && (
+        <Card className={watchAddRequest ? 'border-blue-200 bg-blue-50/50' : ''}>
+          <CardHeader
+            className="cursor-pointer"
+            onClick={() => {
+              setRequestExpanded(!requestExpanded)
+              if (!requestExpanded && !watchAddRequest) {
+                setValue('add_request', true)
+              }
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="add_request"
+                  checked={watchAddRequest || false}
+                  onCheckedChange={(checked) => {
+                    setValue('add_request', !!checked)
+                    if (checked) setRequestExpanded(true)
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Προσθήκη Αιτήματος
+                </CardTitle>
+              </div>
+              {requestExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Προαιρετικά, προσθέστε ένα αίτημα για τον πολίτη
+            </p>
+          </CardHeader>
+          {requestExpanded && (
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="request_category">
+                  {LABELS.category} {watchAddRequest && <span className="text-red-500">*</span>}
+                </Label>
+                <Select
+                  value={watch('request_category') || ''}
+                  onValueChange={(value) => setValue('request_category', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Επιλέξτε κατηγορία" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_CATEGORY_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.request_category && (
+                  <p className="text-sm text-red-500">{String(errors.request_category.message)}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="request_status">
+                  {LABELS.status} {watchAddRequest && <span className="text-red-500">*</span>}
+                </Label>
+                <Select
+                  value={watch('request_status') || 'PENDING'}
+                  onValueChange={(value) => setValue('request_status', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Επιλέξτε κατάσταση" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="request_submitted_at">{LABELS.submitted_at}</Label>
+                <Input
+                  id="request_submitted_at"
+                  type="date"
+                  {...register('request_submitted_at')}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="request_text">{LABELS.request_text}</Label>
+                <Textarea
+                  {...register('request_text')}
+                  placeholder="Περιγραφή αιτήματος..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="request_notes">{LABELS.notes}</Label>
+                <Textarea
+                  {...register('request_notes')}
+                  placeholder="Σημειώσεις αιτήματος..."
+                  rows={2}
+                />
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
+      {/* Optional Communication Section - only in create mode */}
+      {mode === 'create' && (
+        <Card className={watchAddCommunication ? 'border-green-200 bg-green-50/50' : ''}>
+          <CardHeader
+            className="cursor-pointer"
+            onClick={() => {
+              setCommunicationExpanded(!communicationExpanded)
+              if (!communicationExpanded && !watchAddCommunication) {
+                setValue('add_communication', true)
+              }
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="add_communication"
+                  checked={watchAddCommunication || false}
+                  onCheckedChange={(checked) => {
+                    setValue('add_communication', !!checked)
+                    if (checked) setCommunicationExpanded(true)
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MessageSquare className="h-5 w-5 text-green-600" />
+                  Προσθήκη Επικοινωνίας
+                </CardTitle>
+              </div>
+              {communicationExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Προαιρετικά, καταγράψτε μια επικοινωνία με τον πολίτη
+            </p>
+          </CardHeader>
+          {communicationExpanded && (
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="comm_type">
+                  {LABELS.comm_type} {watchAddCommunication && <span className="text-red-500">*</span>}
+                </Label>
+                <Select
+                  value={watch('comm_type') || ''}
+                  onValueChange={(value) => setValue('comm_type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Επιλέξτε τύπο" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMUNICATION_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.comm_type && (
+                  <p className="text-sm text-red-500">{String(errors.comm_type.message)}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="communication_date">
+                  {LABELS.communication_date} {watchAddCommunication && <span className="text-red-500">*</span>}
+                </Label>
+                <Input
+                  id="communication_date"
+                  type="date"
+                  {...register('communication_date')}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="communication_notes">{LABELS.notes}</Label>
+                <Textarea
+                  {...register('communication_notes')}
+                  placeholder="Σημειώσεις επικοινωνίας..."
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       {/* Military Fields - shown when category is MILITARY */}
       {isMilitaryCategory && mode === 'create' && (

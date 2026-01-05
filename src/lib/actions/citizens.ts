@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { citizenSchema, citizenWithMilitarySchema, type CitizenFormData, type CitizenWithMilitaryFormData } from '@/lib/utils/validators'
-import type { CitizenInsert, CitizenUpdate, MilitaryPersonnelInsert } from '@/types/database'
+import type { CitizenInsert, CitizenUpdate, MilitaryPersonnelInsert, RequestInsert, CommunicationInsert } from '@/types/database'
 
 // Response type for actions
 type ActionResponse<T = null> = {
@@ -185,6 +185,61 @@ export async function createCitizenWithMilitary(
 
       console.log('Military record created:', militaryRecord?.id)
       revalidatePath('/dashboard/military')
+    }
+
+    // If add_request is true, create request
+    if (validatedData.add_request && validatedData.request_category && validatedData.request_status) {
+      console.log('Creating request for citizen:', citizen.id)
+      const requestData: RequestInsert = {
+        citizen_id: citizen.id,
+        category: validatedData.request_category,
+        status: validatedData.request_status,
+        request_text: validatedData.request_text || null,
+        notes: validatedData.request_notes || null,
+        submitted_at: validatedData.request_submitted_at || new Date().toISOString().split('T')[0],
+        completed_at: validatedData.request_status === 'COMPLETED' ? new Date().toISOString().split('T')[0] : null,
+        created_by: user.id,
+      }
+
+      const { data: requestRecord, error: requestError } = await supabase
+        .from('requests')
+        .insert(requestData)
+        .select('id')
+        .single()
+
+      if (requestError) {
+        console.error('Supabase error creating request:', requestError)
+        // Continue - citizen is created, just log the error
+      } else {
+        console.log('Request record created:', requestRecord?.id)
+        revalidatePath('/dashboard/requests')
+      }
+    }
+
+    // If add_communication is true, create communication
+    if (validatedData.add_communication && validatedData.comm_type && validatedData.communication_date) {
+      console.log('Creating communication for citizen:', citizen.id)
+      const communicationData: CommunicationInsert = {
+        citizen_id: citizen.id,
+        comm_type: validatedData.comm_type,
+        communication_date: validatedData.communication_date,
+        notes: validatedData.communication_notes || null,
+        created_by: user.id,
+      }
+
+      const { data: communicationRecord, error: communicationError } = await supabase
+        .from('communications')
+        .insert(communicationData)
+        .select('id')
+        .single()
+
+      if (communicationError) {
+        console.error('Supabase error creating communication:', communicationError)
+        // Continue - citizen is created, just log the error
+      } else {
+        console.log('Communication record created:', communicationRecord?.id)
+        revalidatePath('/dashboard/communications')
+      }
     }
 
     revalidatePath('/dashboard/citizens')

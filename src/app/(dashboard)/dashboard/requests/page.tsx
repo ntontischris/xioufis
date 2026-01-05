@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,7 @@ import {
 import { RequestTable } from '@/components/requests/RequestTable'
 import { useRequests } from '@/lib/hooks/useRequests'
 import { REQUEST_STATUS_OPTIONS, REQUEST_CATEGORY_OPTIONS } from '@/lib/utils/constants'
-import { Plus, Search, ClipboardList, Filter, X } from 'lucide-react'
+import { Plus, Search, ClipboardList, Filter, X, User, ArrowLeft } from 'lucide-react'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -53,6 +54,9 @@ function RequestsPageSkeleton() {
 }
 
 function RequestsPageContent() {
+  const searchParams = useSearchParams()
+  const citizenId = searchParams.get('citizen')
+
   const { requests, loading, error } = useRequests()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
@@ -67,7 +71,17 @@ function RequestsPageContent() {
     }
   }, [])
 
+  // Get citizen name for display when filtering
+  const citizenName = citizenId
+    ? requests.find(r => r.citizen_id === citizenId)?.citizen
+    : null
+
   const filteredRequests = requests.filter((request) => {
+    // First filter by citizen if specified
+    if (citizenId && request.citizen_id !== citizenId) {
+      return false
+    }
+
     const searchLower = search.toLowerCase()
     const matchesSearch =
       !search ||
@@ -100,8 +114,32 @@ function RequestsPageContent() {
 
   return (
     <>
-      <Header title="Αιτήματα" />
+      <Header title={citizenName ? `Αιτήματα - ${citizenName.surname} ${citizenName.first_name}` : "Αιτήματα"} />
       <div className="p-6 space-y-6">
+        {/* Citizen filter banner */}
+        {citizenId && citizenName && (
+          <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <User className="h-5 w-5 text-indigo-600" />
+            <div className="flex-1">
+              <p className="font-medium text-indigo-900">
+                Αιτήματα του πολίτη: {citizenName.surname} {citizenName.first_name}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/dashboard/citizens/${citizenId}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Πίσω στον πολίτη
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/requests">
+                <X className="mr-2 h-4 w-4" />
+                Δείτε όλα
+              </Link>
+            </Button>
+          </div>
+        )}
+
         {/* Actions bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2">
@@ -116,7 +154,7 @@ function RequestsPageContent() {
             </div>
           </div>
           <Button asChild>
-            <Link href="/dashboard/requests/new">
+            <Link href={citizenId ? `/dashboard/requests/new?citizen=${citizenId}` : "/dashboard/requests/new"}>
               <Plus className="mr-2 h-4 w-4" />
               Νέο Αίτημα
             </Link>

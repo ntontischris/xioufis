@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/table'
 import { RequestBadge } from './RequestBadge'
 import { getLabel, REQUEST_CATEGORY_OPTIONS } from '@/lib/utils/constants'
+import { MobileCard, MobileCardHeader, MobileCardRow, ResponsiveTableWrapper } from '@/components/ui/MobileCard'
+import { ChevronRight } from 'lucide-react'
 import type { Request } from '@/types/database'
 
 interface RequestWithCitizen extends Request {
@@ -47,15 +49,57 @@ export function RequestTable({ requests, showCitizen = true }: RequestTableProps
     router.push(`/dashboard/requests/${requestId}`)
   }
 
-  return (
+  // Mobile card view for each request
+  const mobileCards = requests.map((request) => (
+    <MobileCard
+      key={request.id}
+      onClick={(e) => handleRowClick(request.id, e)}
+    >
+      <MobileCardHeader
+        action={<ChevronRight className="h-5 w-5 text-muted-foreground" />}
+      >
+        <div className="flex flex-col gap-1">
+          {showCitizen && request.citizen && (
+            <Link
+              href={`/dashboard/citizens/${request.citizen.id}`}
+              className="text-primary hover:underline font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {request.citizen.surname} {request.citizen.first_name}
+            </Link>
+          )}
+          <span className="text-muted-foreground text-sm">
+            {getLabel(REQUEST_CATEGORY_OPTIONS, request.category)}
+          </span>
+        </div>
+      </MobileCardHeader>
+
+      <div className="space-y-1">
+        <MobileCardRow label="Κατάσταση">
+          <RequestBadge status={request.status} />
+        </MobileCardRow>
+        <MobileCardRow label="Αποστολή">
+          {formatDate(request.submitted_at)}
+        </MobileCardRow>
+        {request.completed_at && (
+          <MobileCardRow label="Ολοκλήρωση">
+            {formatDate(request.completed_at)}
+          </MobileCardRow>
+        )}
+      </div>
+    </MobileCard>
+  ))
+
+  // Desktop table view
+  const desktopTable = (
     <Table>
       <TableHeader>
         <TableRow>
           {showCitizen && <TableHead>Πολίτης</TableHead>}
           <TableHead>Κατηγορία</TableHead>
           <TableHead>Κατάσταση</TableHead>
-          <TableHead>Ημ/νία Αποστολής</TableHead>
-          <TableHead>Ημ/νία Ολοκλήρωσης</TableHead>
+          <TableHead className="hidden sm:table-cell">Ημ/νία Αποστολής</TableHead>
+          <TableHead className="hidden lg:table-cell">Ημ/νία Ολοκλήρωσης</TableHead>
           <TableHead className="text-right">Ενέργειες</TableHead>
         </TableRow>
       </TableHeader>
@@ -71,7 +115,7 @@ export function RequestTable({ requests, showCitizen = true }: RequestTableProps
                 {request.citizen ? (
                   <Link
                     href={`/dashboard/citizens/${request.citizen.id}`}
-                    className="text-indigo-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {request.citizen.surname} {request.citizen.first_name}
                   </Link>
@@ -86,8 +130,8 @@ export function RequestTable({ requests, showCitizen = true }: RequestTableProps
             <TableCell>
               <RequestBadge status={request.status} />
             </TableCell>
-            <TableCell>{formatDate(request.submitted_at)}</TableCell>
-            <TableCell>{formatDate(request.completed_at)}</TableCell>
+            <TableCell className="hidden sm:table-cell">{formatDate(request.submitted_at)}</TableCell>
+            <TableCell className="hidden lg:table-cell">{formatDate(request.completed_at)}</TableCell>
             <TableCell className="text-right">
               <Button variant="ghost" size="sm" asChild>
                 <Link href={`/dashboard/requests/${request.id}`}>
@@ -99,5 +143,11 @@ export function RequestTable({ requests, showCitizen = true }: RequestTableProps
         ))}
       </TableBody>
     </Table>
+  )
+
+  return (
+    <ResponsiveTableWrapper mobileView={mobileCards}>
+      {desktopTable}
+    </ResponsiveTableWrapper>
   )
 }

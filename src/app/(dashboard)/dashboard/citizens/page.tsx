@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useCitizens } from '@/lib/hooks/useCitizens'
-import { Plus, Search, Users, Filter, X, ClipboardList } from 'lucide-react'
+import { Plus, Search, Users, ClipboardList, ChevronRight } from 'lucide-react'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -32,6 +32,8 @@ import { toast } from 'sonner'
 import { formatGreekPhone } from '@/lib/utils/validators'
 import { normalizeForSearch } from '@/lib/utils'
 import { getLabel, MUNICIPALITY_OPTIONS, ELECTORAL_DISTRICT_OPTIONS } from '@/lib/utils/constants'
+import { CollapsibleFilters } from '@/components/ui/CollapsibleFilters'
+import { MobileCard, MobileCardHeader, MobileCardRow, ResponsiveTableWrapper } from '@/components/ui/MobileCard'
 import Link from 'next/link'
 
 export default function CitizensPage() {
@@ -46,7 +48,7 @@ function CitizensPageSkeleton() {
   return (
     <>
       <Header title="Πολίτες" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -148,15 +150,151 @@ function CitizensPageContent() {
     setRequestStatusFilter('')
   }
 
-  const hasFilters = search || firstNameFilter || municipalityFilter || districtFilter || requestStatusFilter
+  const hasFilters = !!(search || firstNameFilter || municipalityFilter || districtFilter || requestStatusFilter)
+  const activeFilterCount = [firstNameFilter, municipalityFilter, districtFilter, requestStatusFilter].filter(Boolean).length
+
+  // Mobile card view
+  const mobileCards = paginatedItems.map((citizen) => (
+    <MobileCard
+      key={citizen.id}
+      onClick={(e) => handleRowClick(citizen.id, e)}
+    >
+      <MobileCardHeader
+        action={<ChevronRight className="h-5 w-5 text-muted-foreground" />}
+      >
+        <div className="font-medium">
+          {citizen.surname} {citizen.first_name}
+          {citizen.father_name && (
+            <span className="text-muted-foreground ml-1">
+              ({citizen.father_name})
+            </span>
+          )}
+        </div>
+      </MobileCardHeader>
+
+      <div className="space-y-1">
+        {citizen.mobile && (
+          <MobileCardRow label="Κινητό">
+            <a href={`tel:${citizen.mobile}`} className="text-primary" onClick={(e) => e.stopPropagation()}>
+              {formatGreekPhone(citizen.mobile)}
+            </a>
+          </MobileCardRow>
+        )}
+        {citizen.email && (
+          <MobileCardRow label="Email">
+            <span className="truncate max-w-[150px] inline-block">{citizen.email}</span>
+          </MobileCardRow>
+        )}
+        {citizen.municipality && (
+          <MobileCardRow label="Δήμος">
+            {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
+          </MobileCardRow>
+        )}
+        {citizen.requests_total > 0 && (
+          <MobileCardRow label="Αιτήματα">
+            <Link
+              href={`/dashboard/requests?citizen=${citizen.id}`}
+              className="flex items-center gap-1 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {citizen.requests_pending > 0 && (
+                  <Badge variant="destructive" className="mr-1 text-xs">
+                    {citizen.requests_pending} εκκρεμή
+                  </Badge>
+                )}
+                {citizen.requests_completed > 0 && (
+                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                    {citizen.requests_completed} ολοκλ.
+                  </Badge>
+                )}
+              </span>
+            </Link>
+          </MobileCardRow>
+        )}
+      </div>
+    </MobileCard>
+  ))
+
+  // Desktop table view
+  const desktopTable = (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Ονοματεπώνυμο</TableHead>
+          <TableHead className="hidden sm:table-cell">Κινητό</TableHead>
+          <TableHead className="hidden lg:table-cell">Email</TableHead>
+          <TableHead className="hidden md:table-cell">Δήμος</TableHead>
+          <TableHead className="hidden sm:table-cell">Αιτήματα</TableHead>
+          <TableHead className="text-right">Ενέργειες</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {paginatedItems.map((citizen) => (
+          <TableRow
+            key={citizen.id}
+            className="cursor-pointer hover:bg-muted/50"
+            onClick={(e) => handleRowClick(citizen.id, e)}
+          >
+            <TableCell className="font-medium">
+              {citizen.surname} {citizen.first_name}
+              {citizen.father_name && (
+                <span className="text-muted-foreground ml-1 hidden lg:inline">
+                  ({citizen.father_name})
+                </span>
+              )}
+            </TableCell>
+            <TableCell className="hidden sm:table-cell">{formatGreekPhone(citizen.mobile)}</TableCell>
+            <TableCell className="hidden lg:table-cell">{citizen.email || '-'}</TableCell>
+            <TableCell className="hidden md:table-cell">
+              {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
+            </TableCell>
+            <TableCell className="hidden sm:table-cell">
+              {citizen.requests_total > 0 ? (
+                <Link
+                  href={`/dashboard/requests?citizen=${citizen.id}`}
+                  className="flex items-center gap-1 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {citizen.requests_pending > 0 && (
+                      <Badge variant="destructive" className="mr-1 text-xs">
+                        {citizen.requests_pending} εκκρεμή
+                      </Badge>
+                    )}
+                    {citizen.requests_completed > 0 && (
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                        {citizen.requests_completed} ολοκλ.
+                      </Badge>
+                    )}
+                  </span>
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
+            </TableCell>
+            <TableCell className="text-right">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/dashboard/citizens/${citizen.id}`}>
+                  Προβολή
+                </Link>
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
 
   return (
     <>
       <Header title="Πολίτες" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Actions bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 max-w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Αναζήτηση πολίτη..."
@@ -165,7 +303,7 @@ function CitizensPageContent() {
               className="pl-9"
             />
           </div>
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <Link href="/dashboard/citizens/new">
               <Plus className="mr-2 h-4 w-4" />
               Νέος Πολίτης
@@ -174,17 +312,19 @@ function CitizensPageContent() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-
+        <CollapsibleFilters
+          hasFilters={hasFilters}
+          onClear={clearFilters}
+          activeFilterCount={activeFilterCount}
+        >
           {/* First Name Filter - for name days! */}
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <Input
               list="first-names-list"
               placeholder="Φίλτρο ονόματος..."
               value={firstNameFilter}
               onChange={(e) => setFirstNameFilter(e.target.value)}
-              className="w-[180px]"
+              className="w-full md:w-[180px]"
             />
             <datalist id="first-names-list">
               {uniqueFirstNames.map((name) => (
@@ -194,7 +334,7 @@ function CitizensPageContent() {
           </div>
 
           <Select value={municipalityFilter} onValueChange={(val) => setMunicipalityFilter(val === 'all' ? '' : val)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Δήμος" />
             </SelectTrigger>
             <SelectContent>
@@ -207,7 +347,7 @@ function CitizensPageContent() {
             </SelectContent>
           </Select>
           <Select value={districtFilter} onValueChange={(val) => setDistrictFilter(val === 'all' ? '' : val)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Εκλ. Περιφέρεια" />
             </SelectTrigger>
             <SelectContent>
@@ -220,7 +360,7 @@ function CitizensPageContent() {
             </SelectContent>
           </Select>
           <Select value={requestStatusFilter} onValueChange={(val) => setRequestStatusFilter(val === 'all' ? '' : val)}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Κατάσταση Αιτημάτων" />
             </SelectTrigger>
             <SelectContent>
@@ -232,26 +372,21 @@ function CitizensPageContent() {
               ))}
             </SelectContent>
           </Select>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X className="mr-1 h-4 w-4" />
-              Καθαρισμός
-            </Button>
-          )}
-        </div>
+        </CollapsibleFilters>
 
         {/* Citizens table */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <Users className="h-5 w-5" />
-              Λίστα Πολιτών
+              <span className="hidden sm:inline">Λίστα Πολιτών</span>
+              <span className="sm:hidden">Πολίτες</span>
               <Badge variant="secondary" className="ml-2">
                 {filteredCitizens.length}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
             {loading ? (
               <TableSkeleton rows={10} cols={6} />
             ) : error ? (
@@ -273,73 +408,9 @@ function CitizensPageContent() {
               </div>
             ) : (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ονοματεπώνυμο</TableHead>
-                      <TableHead>Κινητό</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Δήμος</TableHead>
-                      <TableHead>Αιτήματα</TableHead>
-                      <TableHead className="text-right">Ενέργειες</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedItems.map((citizen) => (
-                      <TableRow
-                        key={citizen.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={(e) => handleRowClick(citizen.id, e)}
-                      >
-                        <TableCell className="font-medium">
-                          {citizen.surname} {citizen.first_name}
-                          {citizen.father_name && (
-                            <span className="text-muted-foreground ml-1">
-                              ({citizen.father_name})
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>{formatGreekPhone(citizen.mobile)}</TableCell>
-                        <TableCell>{citizen.email || '-'}</TableCell>
-                        <TableCell>
-                          {getLabel(MUNICIPALITY_OPTIONS, citizen.municipality)}
-                        </TableCell>
-                        <TableCell>
-                          {citizen.requests_total > 0 ? (
-                            <Link
-                              href={`/dashboard/requests?citizen=${citizen.id}`}
-                              className="flex items-center gap-1 hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">
-                                {citizen.requests_pending > 0 && (
-                                  <Badge variant="destructive" className="mr-1 text-xs">
-                                    {citizen.requests_pending} εκκρεμή
-                                  </Badge>
-                                )}
-                                {citizen.requests_completed > 0 && (
-                                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                                    {citizen.requests_completed} ολοκλ.
-                                  </Badge>
-                                )}
-                              </span>
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/dashboard/citizens/${citizen.id}`}>
-                              Προβολή
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <ResponsiveTableWrapper mobileView={mobileCards}>
+                  {desktopTable}
+                </ResponsiveTableWrapper>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

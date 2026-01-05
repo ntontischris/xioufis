@@ -13,7 +13,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { getLabel, MILITARY_TYPE_OPTIONS } from '@/lib/utils/constants'
-import { User, Shield, ClipboardList } from 'lucide-react'
+import { MobileCard, MobileCardHeader, MobileCardRow, ResponsiveTableWrapper } from '@/components/ui/MobileCard'
+import { User, Shield, ClipboardList, ChevronRight } from 'lucide-react'
 import type { MilitaryWithCitizen } from '@/lib/hooks/useMilitary'
 
 interface MilitaryTableProps {
@@ -32,16 +33,93 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
     router.push(`/dashboard/military/${id}`)
   }
 
-  return (
+  // Mobile card view
+  const mobileCards = military.map((m) => (
+    <MobileCard
+      key={m.id}
+      onClick={(e) => handleRowClick(m.id, e)}
+    >
+      <MobileCardHeader
+        action={<ChevronRight className="h-5 w-5 text-muted-foreground" />}
+      >
+        <div className="flex items-center gap-2">
+          {m.military_type === 'CONSCRIPT' ? (
+            <User className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          )}
+          <div>
+            <div className="font-medium">
+              {m.surname} {m.first_name}
+              {m.father_name && (
+                <span className="text-muted-foreground ml-1">({m.father_name})</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </MobileCardHeader>
+
+      <div className="space-y-1">
+        <MobileCardRow label="Τύπος">
+          <Badge variant={m.military_type === 'CONSCRIPT' ? 'secondary' : 'default'}>
+            {getLabel(MILITARY_TYPE_OPTIONS, m.military_type)}
+          </Badge>
+        </MobileCardRow>
+        <MobileCardRow label="ΕΣΣΟ/Βαθμός">
+          {m.military_type === 'CONSCRIPT' && m.esso_year && m.esso_letter
+            ? `${m.esso_year}${m.esso_letter}`
+            : m.military_type === 'PERMANENT' && m.rank
+            ? m.rank
+            : '-'}
+        </MobileCardRow>
+        {m.mobile && (
+          <MobileCardRow label="Κινητό">
+            {m.mobile}
+          </MobileCardRow>
+        )}
+        <MobileCardRow label="Τοποθέτηση">
+          {m.military_type === 'CONSCRIPT'
+            ? m.assignment || m.training_center || '-'
+            : m.service_unit || '-'}
+        </MobileCardRow>
+        {m.requests_total > 0 && m.citizen_id && (
+          <MobileCardRow label="Αιτήματα">
+            <Link
+              href={`/dashboard/requests?citizen=${m.citizen_id}`}
+              className="flex items-center gap-1 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {m.requests_pending > 0 && (
+                  <Badge variant="destructive" className="mr-1 text-xs">
+                    {m.requests_pending} εκκρεμή
+                  </Badge>
+                )}
+                {m.requests_completed > 0 && (
+                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                    {m.requests_completed} ολοκλ.
+                  </Badge>
+                )}
+              </span>
+            </Link>
+          </MobileCardRow>
+        )}
+      </div>
+    </MobileCard>
+  ))
+
+  // Desktop table view
+  const desktopTable = (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Ονοματεπώνυμο</TableHead>
           <TableHead>Τύπος</TableHead>
-          <TableHead>ΕΣΣΟ</TableHead>
-          <TableHead>Κινητό</TableHead>
-          <TableHead>Τοποθέτηση/Μονάδα</TableHead>
-          <TableHead>Αιτήματα</TableHead>
+          <TableHead className="hidden sm:table-cell">ΕΣΣΟ</TableHead>
+          <TableHead className="hidden lg:table-cell">Κινητό</TableHead>
+          <TableHead className="hidden md:table-cell">Τοποθέτηση/Μονάδα</TableHead>
+          <TableHead className="hidden sm:table-cell">Αιτήματα</TableHead>
           <TableHead className="text-right">Ενέργειες</TableHead>
         </TableRow>
       </TableHeader>
@@ -55,14 +133,16 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
             <TableCell className="font-medium">
               <div className="flex items-center gap-2">
                 {m.military_type === 'CONSCRIPT' ? (
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-4 w-4 text-muted-foreground hidden sm:block" />
                 ) : (
-                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <Shield className="h-4 w-4 text-muted-foreground hidden sm:block" />
                 )}
-                {m.surname} {m.first_name}
-                {m.father_name && (
-                  <span className="text-muted-foreground">({m.father_name})</span>
-                )}
+                <span>
+                  {m.surname} {m.first_name}
+                  {m.father_name && (
+                    <span className="text-muted-foreground hidden lg:inline"> ({m.father_name})</span>
+                  )}
+                </span>
               </div>
             </TableCell>
             <TableCell>
@@ -70,20 +150,20 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
                 {getLabel(MILITARY_TYPE_OPTIONS, m.military_type)}
               </Badge>
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden sm:table-cell">
               {m.military_type === 'CONSCRIPT' && m.esso_year && m.esso_letter
                 ? `${m.esso_year}${m.esso_letter}`
                 : m.military_type === 'PERMANENT' && m.rank
                 ? m.rank
                 : '-'}
             </TableCell>
-            <TableCell>{m.mobile || '-'}</TableCell>
-            <TableCell>
+            <TableCell className="hidden lg:table-cell">{m.mobile || '-'}</TableCell>
+            <TableCell className="hidden md:table-cell">
               {m.military_type === 'CONSCRIPT'
                 ? m.assignment || m.training_center || '-'
                 : m.service_unit || '-'}
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden sm:table-cell">
               {m.requests_total > 0 && m.citizen_id ? (
                 <Link
                   href={`/dashboard/requests?citizen=${m.citizen_id}`}
@@ -119,5 +199,11 @@ export function MilitaryTable({ military }: MilitaryTableProps) {
         ))}
       </TableBody>
     </Table>
+  )
+
+  return (
+    <ResponsiveTableWrapper mobileView={mobileCards}>
+      {desktopTable}
+    </ResponsiveTableWrapper>
   )
 }

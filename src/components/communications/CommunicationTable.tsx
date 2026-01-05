@@ -13,8 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { getLabel, COMMUNICATION_TYPE_OPTIONS } from '@/lib/utils/constants'
+import { MobileCard, MobileCardHeader, MobileCardRow, ResponsiveTableWrapper } from '@/components/ui/MobileCard'
 import type { Communication } from '@/types/database'
-import { Phone, Mail, Users, MessageSquare, MoreHorizontal } from 'lucide-react'
+import { Phone, Mail, Users, MessageSquare, MoreHorizontal, ChevronRight } from 'lucide-react'
 
 interface CitizenInfo {
   id: string
@@ -58,14 +59,54 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
     router.push(`/dashboard/communications/${communicationId}`)
   }
 
-  return (
+  // Mobile card view
+  const mobileCards = communications.map((comm) => (
+    <MobileCard
+      key={comm.id}
+      onClick={(e) => handleRowClick(comm.id, e)}
+    >
+      <MobileCardHeader
+        action={<ChevronRight className="h-5 w-5 text-muted-foreground" />}
+      >
+        <div className="flex flex-col gap-1">
+          {showCitizen && comm.citizen && (
+            <Link
+              href={`/dashboard/citizens/${comm.citizen.id}`}
+              className="text-primary hover:underline font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {comm.citizen.surname} {comm.citizen.first_name}
+            </Link>
+          )}
+          <Badge variant="outline" className="flex items-center gap-1 w-fit">
+            {typeIcons[comm.comm_type] || typeIcons.OTHER}
+            {getLabel(COMMUNICATION_TYPE_OPTIONS, comm.comm_type)}
+          </Badge>
+        </div>
+      </MobileCardHeader>
+
+      <div className="space-y-1">
+        <MobileCardRow label="Ημερομηνία">
+          {formatDate(comm.communication_date)}
+        </MobileCardRow>
+        {comm.notes && (
+          <div className="pt-2 mt-2 border-t">
+            <p className="text-sm text-muted-foreground line-clamp-2">{comm.notes}</p>
+          </div>
+        )}
+      </div>
+    </MobileCard>
+  ))
+
+  // Desktop table view
+  const desktopTable = (
     <Table>
       <TableHeader>
         <TableRow>
           {showCitizen && <TableHead>Πολίτης</TableHead>}
           <TableHead>Τύπος</TableHead>
           <TableHead>Ημερομηνία</TableHead>
-          <TableHead>Σημειώσεις</TableHead>
+          <TableHead className="hidden lg:table-cell">Σημειώσεις</TableHead>
           <TableHead className="text-right">Ενέργειες</TableHead>
         </TableRow>
       </TableHeader>
@@ -81,7 +122,7 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
                 {comm.citizen ? (
                   <Link
                     href={`/dashboard/citizens/${comm.citizen.id}`}
-                    className="text-indigo-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {comm.citizen.surname} {comm.citizen.first_name}
                   </Link>
@@ -97,7 +138,7 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
               </Badge>
             </TableCell>
             <TableCell>{formatDate(comm.communication_date)}</TableCell>
-            <TableCell className="max-w-xs truncate">
+            <TableCell className="hidden lg:table-cell max-w-xs truncate">
               {comm.notes || '-'}
             </TableCell>
             <TableCell className="text-right">
@@ -111,5 +152,11 @@ export function CommunicationTable({ communications, showCitizen = true }: Commu
         ))}
       </TableBody>
     </Table>
+  )
+
+  return (
+    <ResponsiveTableWrapper mobileView={mobileCards}>
+      {desktopTable}
+    </ResponsiveTableWrapper>
   )
 }

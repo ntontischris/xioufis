@@ -19,10 +19,11 @@ import {
 import { CommunicationTable } from '@/components/communications/CommunicationTable'
 import { useCommunications } from '@/lib/hooks/useCommunications'
 import { COMMUNICATION_TYPE_OPTIONS } from '@/lib/utils/constants'
-import { Plus, Search, MessageSquare, Filter, X, User, ArrowLeft } from 'lucide-react'
+import { Plus, Search, MessageSquare, User, ArrowLeft, X } from 'lucide-react'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
+import { CollapsibleFilters } from '@/components/ui/CollapsibleFilters'
 
 export default function CommunicationsPage() {
   return (
@@ -36,7 +37,7 @@ function CommunicationsPageSkeleton() {
   return (
     <>
       <Header title="Επικοινωνίες" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -107,50 +108,53 @@ function CommunicationsPageContent() {
     setSearch('')
   }
 
-  const hasFilters = typeFilter || search
+  const hasFilters = !!(typeFilter || search)
+  const activeFilterCount = typeFilter ? 1 : 0
 
   return (
     <>
       <Header title={citizenName ? `Επικοινωνίες - ${citizenName.surname} ${citizenName.first_name}` : "Επικοινωνίες"} />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Citizen filter banner */}
         {citizenId && citizenName && (
-          <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
-            <User className="h-5 w-5 text-green-600" />
-            <div className="flex-1">
-              <p className="font-medium text-green-900">
-                Επικοινωνίες του πολίτη: {citizenName.surname} {citizenName.first_name}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 md:p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2 flex-1">
+              <User className="h-5 w-5 text-green-600 shrink-0" />
+              <p className="font-medium text-green-900 text-sm md:text-base">
+                Επικοινωνίες: {citizenName.surname} {citizenName.first_name}
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/citizens/${citizenId}`}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Πίσω στον πολίτη
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/communications">
-                <X className="mr-2 h-4 w-4" />
-                Δείτε όλες
-              </Link>
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-initial">
+                <Link href={`/dashboard/citizens/${citizenId}`}>
+                  <ArrowLeft className="mr-1 md:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Πίσω στον πολίτη</span>
+                  <span className="sm:hidden">Πίσω</span>
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild className="flex-1 sm:flex-initial">
+                <Link href="/dashboard/communications">
+                  <X className="mr-1 md:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Δείτε όλες</span>
+                  <span className="sm:hidden">Όλες</span>
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Actions bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Αναζήτηση..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 max-w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Αναζήτηση..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <Link href={citizenId ? `/dashboard/communications/new?citizen=${citizenId}` : "/dashboard/communications/new"}>
               <Plus className="mr-2 h-4 w-4" />
               Νέα Επικοινωνία
@@ -159,10 +163,13 @@ function CommunicationsPageContent() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+        <CollapsibleFilters
+          hasFilters={hasFilters}
+          onClear={clearFilters}
+          activeFilterCount={activeFilterCount}
+        >
           <Select value={typeFilter} onValueChange={(val) => setTypeFilter(val === 'all' ? '' : val)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Τύπος" />
             </SelectTrigger>
             <SelectContent>
@@ -174,26 +181,21 @@ function CommunicationsPageContent() {
               ))}
             </SelectContent>
           </Select>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X className="mr-1 h-4 w-4" />
-              Καθαρισμός
-            </Button>
-          )}
-        </div>
+        </CollapsibleFilters>
 
         {/* Communications table */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <MessageSquare className="h-5 w-5" />
-              Ιστορικό Επικοινωνιών
+              <span className="hidden sm:inline">Ιστορικό Επικοινωνιών</span>
+              <span className="sm:hidden">Επικοινωνίες</span>
               <Badge variant="secondary" className="ml-2">
                 {filteredCommunications.length}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
             {loading ? (
               <TableSkeleton rows={10} cols={5} />
             ) : error ? (

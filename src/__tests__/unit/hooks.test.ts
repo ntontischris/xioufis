@@ -148,7 +148,7 @@ describe('usePagination', () => {
 
 describe('useUnsavedChanges', () => {
   it('should be importable', async () => {
-    const module = await import('@/lib/hooks/useUnsavedChanges')
-    expect(module.useUnsavedChanges).toBeDefined()
+    const hookModule = await import('@/lib/hooks/useUnsavedChanges')
+    expect(hookModule.useUnsavedChanges).toBeDefined()
   })
 })

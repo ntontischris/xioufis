@@ -5,22 +5,34 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { SearchDialog } from './SearchDialog'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useSyncExternalStore } from 'react'
 
 interface HeaderProps {
   title?: string
   breadcrumbLabel?: string // Custom label for dynamic routes (e.g., citizen name)
 }
 
-export function Header({ title, breadcrumbLabel }: HeaderProps) {
-  const [isDark, setIsDark] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+// Subscribe to dark mode changes via MutationObserver
+function subscribeToDarkMode(callback: () => void) {
+  const observer = new MutationObserver(callback)
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+  return () => observer.disconnect()
+}
 
-  useEffect(() => {
-    // Check for dark mode preference
-    const isDarkMode = document.documentElement.classList.contains('dark')
-    setIsDark(isDarkMode)
-  }, [])
+function getDarkModeSnapshot() {
+  return document.documentElement.classList.contains('dark')
+}
+
+function getServerSnapshot() {
+  return false
+}
+
+export function Header({ title, breadcrumbLabel }: HeaderProps) {
+  const isDark = useSyncExternalStore(subscribeToDarkMode, getDarkModeSnapshot, getServerSnapshot)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   // Global keyboard shortcut for search
   useEffect(() => {
@@ -35,10 +47,9 @@ export function Header({ title, breadcrumbLabel }: HeaderProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = useCallback(() => {
     document.documentElement.classList.toggle('dark')
-    setIsDark(!isDark)
-  }
+  }, [])
 
   return (
     <header className="border-b bg-card px-6 py-3">

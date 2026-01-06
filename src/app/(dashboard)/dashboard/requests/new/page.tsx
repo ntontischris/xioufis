@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { RequestForm } from '@/components/requests/RequestForm'
 import {
@@ -21,16 +21,12 @@ function NewRequestContent() {
 
   const { citizens, loading: loadingCitizens } = useCitizens()
   const [selectedCitizenId, setSelectedCitizenId] = useState<string>(citizenIdParam || '')
-  const [selectedCitizenName, setSelectedCitizenName] = useState<string>('')
 
-  // Set citizen name when citizen is selected or pre-selected from URL
-  useEffect(() => {
-    if (selectedCitizenId) {
-      const citizen = citizens.find((c) => c.id === selectedCitizenId)
-      if (citizen) {
-        setSelectedCitizenName(`${citizen.surname} ${citizen.first_name}`)
-      }
-    }
+  // Derive citizen name from selected ID and citizens array
+  const selectedCitizenName = useMemo(() => {
+    if (!selectedCitizenId) return ''
+    const citizen = citizens.find((c) => c.id === selectedCitizenId)
+    return citizen ? `${citizen.surname} ${citizen.first_name}` : ''
   }, [selectedCitizenId, citizens])
 
   return (

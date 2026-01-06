@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -40,11 +40,6 @@ export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-
-  // Close sheet on route change
-  useEffect(() => {
-    setOpen(false)
-  }, [pathname])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

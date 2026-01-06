@@ -83,7 +83,7 @@ export function Breadcrumb({ customLabel, className }: BreadcrumbProps) {
             <Home className="h-4 w-4" />
           </Link>
         </li>
-        {breadcrumbs.slice(1).map((item, index) => (
+        {breadcrumbs.slice(1).map((item) => (
           <li key={item.href} className="flex items-center gap-1">
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             {item.isLast ? (

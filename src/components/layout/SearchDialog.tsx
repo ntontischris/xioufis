@@ -201,7 +201,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             </div>
           ) : allResults.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Δεν βρέθηκαν αποτελέσματα για "{query}"
+              Δεν βρέθηκαν αποτελέσματα για &quot;{query}&quot;
             </p>
           ) : (
             <>

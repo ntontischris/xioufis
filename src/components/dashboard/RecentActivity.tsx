@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Phone, Mail, User, Shield, FileText } from 'lucide-react'
+import { Phone, User, Shield, FileText } from 'lucide-react'
 import type { RecentActivityItem } from '@/lib/hooks/useDashboardStats'
 
 interface RecentActivityProps {
@@ -12,12 +12,6 @@ const typeIcons: Record<string, React.ReactNode> = {
   request: <FileText className="h-4 w-4 text-yellow-500" />,
   communication: <Phone className="h-4 w-4 text-blue-500" />,
   military: <Shield className="h-4 w-4 text-indigo-500" />,
-}
-
-const typeLabels: Record<string, string> = {
-  request: 'Αίτημα',
-  communication: 'Επικοινωνία',
-  military: 'Στρατιωτικό',
 }
 
 export function RecentActivity({ items }: RecentActivityProps) {

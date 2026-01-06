@@ -63,7 +63,7 @@ export function useMilitary(options: UseMilitaryOptions = {}) {
       const citizenIds = [...new Set(militaryData.map((m) => m.citizen_id).filter(Boolean))] as string[]
 
       // Fetch citizens if there are any
-      let citizenMap = new Map<string, CitizenInfo>()
+      const citizenMap = new Map<string, CitizenInfo>()
       if (citizenIds.length > 0) {
         const { data: citizensData } = await supabase
           .from('citizens')

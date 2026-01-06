@@ -254,7 +254,6 @@ function getMonthlyTrend(requests: { submitted_at: string; status: string }[]): 
 
   for (let i = 5; i >= 0; i--) {
     const date = new Date(today.getFullYear(), today.getMonth() - i, 1)
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     const monthLabel = date.toLocaleDateString('el-GR', { month: 'short' })
 
     const monthRequests = requests.filter((r) => {

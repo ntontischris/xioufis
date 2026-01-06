@@ -19,6 +19,8 @@ import { MilitaryTable } from '@/components/military/MilitaryTable'
 import { useMilitary } from '@/lib/hooks/useMilitary'
 import { MILITARY_TYPE_OPTIONS, ESSO_LETTER_OPTIONS } from '@/lib/utils/constants'
 import { Plus, Search, Shield } from 'lucide-react'
+import { ExportButton } from '@/components/ui/ExportButton'
+import { militaryExportColumns } from '@/lib/utils/export-configs'
 import { normalizeForSearch } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
@@ -152,12 +154,19 @@ function MilitaryPageContent() {
               className="pl-9"
             />
           </div>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/dashboard/military/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Νέα Εγγραφή
-            </Link>
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ExportButton
+              data={filteredMilitary}
+              columns={militaryExportColumns}
+              options={{ fileName: 'stratiwtiko_prosopiko', sheetName: 'Στρατιωτικό Προσωπικό' }}
+            />
+            <Button asChild className="flex-1 sm:flex-initial">
+              <Link href="/dashboard/military/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Νέα Εγγραφή
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

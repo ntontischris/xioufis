@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/table'
 import { useCitizens } from '@/lib/hooks/useCitizens'
 import { Plus, Search, Users, ClipboardList, ChevronRight } from 'lucide-react'
+import { ExportButton } from '@/components/ui/ExportButton'
+import { citizensExportColumns } from '@/lib/utils/export-configs'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -303,12 +305,19 @@ function CitizensPageContent() {
               className="pl-9"
             />
           </div>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/dashboard/citizens/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Νέος Πολίτης
-            </Link>
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ExportButton
+              data={filteredCitizens}
+              columns={citizensExportColumns}
+              options={{ fileName: 'polites', sheetName: 'Πολίτες' }}
+            />
+            <Button asChild className="flex-1 sm:flex-initial">
+              <Link href="/dashboard/citizens/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Νέος Πολίτης
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

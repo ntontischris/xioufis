@@ -20,6 +20,8 @@ import { RequestTable } from '@/components/requests/RequestTable'
 import { useRequests } from '@/lib/hooks/useRequests'
 import { REQUEST_STATUS_OPTIONS, REQUEST_CATEGORY_OPTIONS } from '@/lib/utils/constants'
 import { Plus, Search, ClipboardList, User, ArrowLeft, X } from 'lucide-react'
+import { ExportButton } from '@/components/ui/ExportButton'
+import { requestsExportColumns } from '@/lib/utils/export-configs'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -157,12 +159,19 @@ function RequestsPageContent() {
               className="pl-9"
             />
           </div>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href={citizenId ? `/dashboard/requests/new?citizen=${citizenId}` : "/dashboard/requests/new"}>
-              <Plus className="mr-2 h-4 w-4" />
-              Νέο Αίτημα
-            </Link>
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ExportButton
+              data={filteredRequests}
+              columns={requestsExportColumns}
+              options={{ fileName: 'aithmata', sheetName: 'Αιτήματα' }}
+            />
+            <Button asChild className="flex-1 sm:flex-initial">
+              <Link href={citizenId ? `/dashboard/requests/new?citizen=${citizenId}` : "/dashboard/requests/new"}>
+                <Plus className="mr-2 h-4 w-4" />
+                Νέο Αίτημα
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

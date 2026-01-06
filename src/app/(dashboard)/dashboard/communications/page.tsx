@@ -20,6 +20,8 @@ import { CommunicationTable } from '@/components/communications/CommunicationTab
 import { useCommunications } from '@/lib/hooks/useCommunications'
 import { COMMUNICATION_TYPE_OPTIONS } from '@/lib/utils/constants'
 import { Plus, Search, MessageSquare, User, ArrowLeft, X } from 'lucide-react'
+import { ExportButton } from '@/components/ui/ExportButton'
+import { communicationsExportColumns } from '@/lib/utils/export-configs'
 import { TableSkeleton } from '@/components/ui/TableSkeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/lib/hooks/usePagination'
@@ -154,12 +156,19 @@ function CommunicationsPageContent() {
               className="pl-9"
             />
           </div>
-          <Button asChild className="w-full sm:w-auto">
-            <Link href={citizenId ? `/dashboard/communications/new?citizen=${citizenId}` : "/dashboard/communications/new"}>
-              <Plus className="mr-2 h-4 w-4" />
-              Νέα Επικοινωνία
-            </Link>
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ExportButton
+              data={filteredCommunications}
+              columns={communicationsExportColumns}
+              options={{ fileName: 'epikoinwnies', sheetName: 'Επικοινωνίες' }}
+            />
+            <Button asChild className="flex-1 sm:flex-initial">
+              <Link href={citizenId ? `/dashboard/communications/new?citizen=${citizenId}` : "/dashboard/communications/new"}>
+                <Plus className="mr-2 h-4 w-4" />
+                Νέα Επικοινωνία
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
